@@ -1,0 +1,1198 @@
+/* ============================================================================
+   KB CORE - styles.css        OWNER: Agent A (design)
+   ----------------------------------------------------------------------------
+   DESIGN READ
+     A single-user training instrument for an athlete mid-effort, read at 2 m
+     from a mat in low light, with a bike-computer / lap-timer language
+     (Garmin Edge, Wahoo, a pace clock on a gym wall), leaning toward a
+     dark-locked vanilla-CSS system: tabular mono numerals, one hi-vis accent,
+     word labels instead of glyphs.
+
+   DIALS
+     DESIGN_VARIANCE  4   Offset, not artsy. The run view is deliberately
+                          predictable: you must find the clock without looking.
+                          Asymmetry lives on home + library only.
+     MOTION_INTENSITY 3   State transitions only (phase colour crossfade, view
+                          enter, progress fill, press feedback). No ambient
+                          loops. The exercise clips are the only continuous
+                          motion on the page and they are content, not decor.
+     VISUAL_DENSITY   6   Home is a cockpit (settings + full interval list +
+                          history). Run view inverts to near-empty so one
+                          number dominates.
+
+   THEME LOCK: dark only, on purpose. This is used at 6am in a dim room with
+   the phone on the floor. A light mode would be a retina flash, not a feature.
+   `color-scheme: dark` is declared so form controls follow.
+
+   COLOUR LOCK
+     ONE brand accent: --lime. It is the only colour used for "this is the
+     primary action / this is active" anywhere in the app (Start, Pause,
+     active filter chip, progress fill, wordmark).
+     Two further colours exist ONLY as semantic state, never as decoration:
+       --cyan   REST phase
+       --amber  GET READY phase, and the "stop if" caution line
+     WORK vs REST is signalled by hue AND temperature AND the literal word in
+     #phase. Never by colour alone.
+
+   SHAPE LOCK
+     --r-1  6px   chips, inputs, small controls
+     --r-2  12px  buttons, panels, transport keys
+     --r-3  16px  media tiles, the detail sheet
+     Nothing is a pill. Nothing is square. That is the whole rule.
+
+   ICONS: there are none, and that is deliberate. No npm and no CDN means no
+   icon library is reachable offline, and the skill forbids hand-rolled SVG
+   icon paths. Word labels ("Pause", "Skip", "Back") also beat glyphs at 2 m
+   with sweaty hands. Zero hand-drawn SVG ships in this app.
+
+   ============================================================================
+   CONTRACT FOR AGENT B (library.js) - INJECTED ITEM CLASS NAMES
+   ----------------------------------------------------------------------------
+   These are the names the brief proposed and I have NOT changed any of them.
+   Sub-element names are additive; if you emit only the parent class the item
+   still renders acceptably.
+
+   #library-grid  <-  repeat of:
+     <article class="ex-card" data-id="halo">
+       <div class="ex-card__media">
+         <video autoplay loop muted playsinline preload="auto"
+                poster="media/halo.jpg" src="media/halo.mp4"></video>
+       </div>
+       <div class="ex-card__body">
+         <h3 class="ex-card__name">Kettlebell Halo</h3>
+         <p  class="ex-card__meta">Beginner / Shoulders, deep core</p>
+       </div>
+     </article>
+   Optional extras that are already styled if you emit them:
+     .ex-card__tag        small mono chip, absolutely positioned bottom-left of
+                          the media box (use for modeLabel, e.g. "30s per side")
+     .ex-card--active     highlighted card (currently open in the detail sheet)
+
+   #session-preview and #upcoming-list  <-  repeat of:
+     <div class="queue-item">
+       <span class="queue-item__idx">04</span>
+       <span class="queue-item__name">Kettlebell Halo</span>
+       <span class="queue-item__dur">60s</span>
+     </div>
+   Modifiers (both styled):
+     .queue-item--done      past intervals, dimmed and struck
+     .queue-item--current   the live interval, lime rail + brighter ink
+   Optional extras already styled:
+     .queue-item--rest      renders in the cyan REST language
+     .queue-group           a sticky-ish subheading row ("Round 2", "Cool-down")
+
+   #library-detail  <-  you own the entire innerHTML. Styled hooks:
+     .sheet__head .sheet__close .sheet__media .sheet__title .sheet__sub
+     .sheet__cue .sheet__stop .sheet__rows .sheet__row .sheet__label
+     .sheet__value .sheet__source
+   Toggle the sheet by adding / removing the `hidden` class on #library-detail.
+   Put a real close button in .sheet__close - it is already sized to 44px.
+
+   #library-filters buttons: I set aria-pressed="true" on the "all" chip.
+   Active styling responds to BOTH [aria-pressed="true"] and .is-active, so
+   use whichever you prefer.
+
+   ============================================================================
+   CONTRACT FOR AGENT C (app.js) - THINGS CSS EXPECTS YOU TO DO
+   ----------------------------------------------------------------------------
+   1. PHASE COLOUR. Set the phase on ANY of these three hooks, they all work:
+        document.body.className = "work" | "rest" | "prep"      (v1 convention)
+        #view-run.dataset.phase = "work" | "rest" | "prep"
+        #phase.dataset.phase    = "work" | "rest" | "prep"
+      If none is set the run view stays in the neutral GET READY amber, and
+      WORK vs REST would then only be distinguishable by the #phase word. Set
+      one of them. `body.className` is the cheapest.
+   2. #ex-stop gets the words "Stop if " prepended by CSS. Set its textContent
+      to the raw `stop` string only ("Lower back arches"). Empty string hides
+      the whole line.
+   3. #ex-side, #up-next, #wl, and the four <output> mirrors all collapse when
+      empty, so leaving them alone is safe.
+   4. #progress-bar is the INNER fill. Set style.width = "37%".
+   5. #btn-pause: swap its textContent between "Pause" and "Resume". Nothing
+      else needs to change; the key keeps its accent fill either way.
+   6. Views are shown / hidden with the `hidden` CLASS (not the attribute).
+   ============================================================================ */
+
+/* ---------------------------------------------------------------- tokens -- */
+:root {
+  color-scheme: dark;
+
+  --bg:      #0e1113;   /* cool graphite. not #000, keeps depth on OLED     */
+  --bg-2:    #14181b;   /* panel                                            */
+  --bg-3:    #1b2126;   /* input / raised control                           */
+  --bg-4:    #232b31;   /* pressed / hover                                  */
+  --line:    #262e34;
+  --line-2:  #36424a;
+
+  --ink:     #eef2f4;
+  --ink-2:   #a9b5bc;   /* 8.4:1 on --bg                                    */
+  --ink-3:   #7f8d95;   /* 4.9:1 on --bg, the floor for any real text       */
+
+  --lime:    #c9f24a;   /* THE accent. hi-vis kit yellow-green              */
+  --lime-dk: #9dc122;
+  --cyan:    #5ec8e8;   /* REST                                             */
+  --amber:   #ffab3d;   /* GET READY, and caution                           */
+  --on-lime: #0d1206;   /* ink that sits on a lime fill, 13.9:1             */
+
+  --r-1: 6px;
+  --r-2: 12px;
+  --r-3: 16px;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text",
+             "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono",
+               "Roboto Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+
+  --shadow-deck: 0 -14px 32px -12px rgb(6 10 12 / .95);
+  --shadow-lift: 0 10px 30px -14px rgb(6 10 12 / .9);
+
+  --pad: 18px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+
+  /* z scale, documented so nothing ever reaches for 9999 */
+  --z-sticky: 10;
+  --z-deck:   20;
+  --z-sheet:  30;
+  --z-skip:   40;
+}
+
+/* ------------------------------------------------------------------ base -- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, p, figure { margin: 0; }
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a { color: var(--lime); text-underline-offset: 3px; }
+
+:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+/* a lime ring on a lime fill is no ring at all */
+.btn--primary:focus-visible,
+.tbtn--primary:focus-visible,
+.chip[aria-pressed="true"]:focus-visible,
+.chip.is-active:focus-visible { outline-color: var(--ink); }
+
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+.skip-link {
+  position: fixed;
+  top: calc(8px + var(--safe-t));
+  left: 8px;
+  z-index: var(--z-skip);
+  padding: 12px 16px;
+  border-radius: var(--r-2);
+  background: var(--lime);
+  color: var(--on-lime);
+  font-weight: 650;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+.skip-link:focus-visible { transform: none; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------- views -- */
+/* No `display: contents` on <main>: some assistive tech drops the landmark
+   role when a semantic element is display:contents, and a plain block wrapper
+   lays the views out identically. */
+.view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+  padding-left: var(--safe-l);
+  padding-right: var(--safe-r);
+  animation: view-in 200ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+/* motivation: a view swap is a state change, the 6px rise tells you the screen
+   replaced itself rather than repainted in place. 200ms, once, never loops. */
+@keyframes view-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* `height` and not just `min-height`, deliberately. `overflow-y: auto` creates
+   a scroll box whether or not it ever overflows, and position:sticky resolves
+   against the nearest such box. With min-height alone the view would simply
+   grow, the box would never scroll, and every sticky element (topbar, filter
+   row, start bar, transport deck) would silently pin to the bottom of the
+   element instead of the viewport. A definite height makes the view the real
+   scroll container. */
+.view--scroll {
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.view__body { padding: 0 var(--pad) 28px; display: grid; gap: 18px; }
+
+/* ---------------------------------------------------------------- topbar -- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: calc(10px + var(--safe-t)) var(--pad) 10px;
+  /* solid, not a fade: the library filter row sticks directly beneath it and
+     a translucent bar would let scrolling cards smear through both. */
+  background: var(--bg);
+}
+
+.wordmark {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .24em;
+  color: var(--lime);
+}
+.wordmark span { color: var(--ink-2); }
+
+.topbar__title {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+}
+.topbar__spacer { margin-left: auto; }
+
+/* --------------------------------------------------------------- buttons -- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--r-2);
+  font-weight: 600;
+  letter-spacing: -.005em;
+  transition: background-color 160ms ease, border-color 160ms ease,
+              transform 120ms cubic-bezier(.16, 1, .3, 1);
+}
+.btn:active { transform: scale(.975); }
+
+.btn--ghost {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.btn--ghost:hover { background: var(--bg-3); border-color: var(--line-2); }
+
+.btn--primary {
+  background: var(--lime);
+  color: var(--on-lime);
+  font-weight: 750;
+}
+.btn--primary:hover { background: #d5f76a; }
+
+.btn--xl {
+  width: 100%;
+  min-height: 62px;
+  font-size: 19px;
+  letter-spacing: .01em;
+}
+
+.btn--sm { min-height: 44px; padding: 0 14px; font-size: 14.5px; }
+
+.btn__count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  padding-left: 8px;
+  border-left: 1px solid var(--line-2);
+}
+
+/* ------------------------------------------------------ shared type bits -- */
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.hint {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-3);
+  text-wrap: pretty;
+}
+
+.empty {
+  padding: 18px 2px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-3);
+  text-wrap: pretty;
+}
+
+.panel {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg-2);
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+.panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* =========================================================== HOME  view === */
+
+/* Left-aligned data hero. No centred stack, no gradient blob: the largest
+   thing on the screen is the number you actually came here to check. */
+.today {
+  padding: 4px 0 6px 16px;
+  border-left: 2px solid var(--lime);
+  display: grid;
+  gap: 8px;
+}
+.today__total {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(52px, 16vw, 78px);
+  font-weight: 600;
+  line-height: .92;
+  letter-spacing: -.045em;
+}
+.today__unit {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.today__shape {
+  max-width: 46ch;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.today__shape b { color: var(--ink); font-weight: 650; }
+
+/* ---- timing fields ---- */
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.field { display: grid; gap: 6px; min-width: 0; }
+.field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.field__control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 56px;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-1);
+  background: var(--bg-3);
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+.field__control:focus-within {
+  border-color: var(--lime);
+  background: var(--bg-4);
+}
+.field__input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  padding: 0;
+}
+/* the wrapper's :focus-within state (lime border + lifted fill) is the focus
+   indicator, so the input does not draw a second ring inside it */
+.field__input:focus,
+.field__input:focus-visible { outline: none; }
+/* native spinners are useless at 390px and steal 20px of the value box */
+.field__input::-webkit-outer-spin-button,
+.field__input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.field__input { -moz-appearance: textfield; appearance: textfield; }
+
+.field__unit {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.field__out {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.field__out:empty { display: none; }
+
+/* ---- queue (session preview + upcoming list) ---- */
+.queue { display: grid; gap: 2px; }
+
+.queue-item {
+  display: grid;
+  grid-template-columns: 2.4em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px 8px 8px;
+  border-radius: var(--r-1);
+  border-left: 2px solid transparent;
+  font-size: 15px;
+  color: var(--ink-2);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+.queue-item:nth-child(odd) { background: rgb(255 255 255 / .022); }
+
+.queue-item__idx {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.queue-item__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.queue-item__dur {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.queue-item--rest { color: var(--ink-3); }
+.queue-item--rest .queue-item__name { font-style: normal; }
+
+.queue-item--done {
+  color: var(--ink-3);
+  opacity: .55;
+}
+.queue-item--done .queue-item__name { text-decoration: line-through; }
+
+.queue-item--current {
+  background: rgb(201 242 74 / .09);
+  border-left-color: var(--lime);
+  color: var(--ink);
+  font-weight: 650;
+}
+.queue-item--current .queue-item__idx,
+.queue-item--current .queue-item__dur { color: var(--lime); }
+
+.queue-group {
+  padding: 14px 8px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* Loading state. Skeletons repeat the final row / card geometry exactly, so
+   the layout does not jump when Agent B or C swaps in the real content. */
+.queue-item--skeleton {
+  pointer-events: none;
+  grid-template-columns: 2.4em minmax(0, 1fr) 34px;
+}
+.bone--short { width: 58%; }
+.ex-card--skeleton { pointer-events: none; }
+.ex-card--skeleton .ex-card__media {
+  background: linear-gradient(90deg, var(--bg-3), var(--bg-4), var(--bg-3));
+  background-size: 220% 100%;
+  animation: bone 1.4s ease-in-out infinite;
+}
+.queue-item--skeleton .bone,
+.ex-card--skeleton .bone {
+  display: block;
+  height: 11px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--bg-3), var(--bg-4), var(--bg-3));
+  background-size: 220% 100%;
+  animation: bone 1.4s ease-in-out infinite;
+}
+@keyframes bone {
+  0%   { background-position: 120% 0; }
+  100% { background-position: -20% 0; }
+}
+
+/* ---- history ---- */
+.history { display: grid; gap: 2px; }
+.history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14.5px;
+}
+.history-item:last-child { border-bottom: 0; }
+.history-item__meta {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+/* ---- sticky start bar ---- */
+.actionbar {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-deck);
+  margin-top: auto;
+  padding: 14px var(--pad) calc(14px + var(--safe-b));
+  background: linear-gradient(rgb(14 17 19 / 0), var(--bg) 42%);
+}
+
+/* ======================================================== LIBRARY  view === */
+
+.chiprow {
+  position: sticky;
+  /* 10px pad + 44px button + 10px pad = 64, plus whatever the notch adds. */
+  top: calc(64px + var(--safe-t));
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px var(--pad) 14px;
+  background: var(--bg);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+.chiprow::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex: none;
+  scroll-snap-align: start;
+  min-height: 44px;
+  padding: 0 15px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-1);
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease,
+              border-color 150ms ease, transform 120ms ease;
+}
+.chip:active { transform: scale(.97); }
+.chip[aria-pressed="true"], .chip.is-active {
+  background: var(--lime);
+  border-color: var(--lime);
+  color: var(--on-lime);
+}
+.chiprow__sep {
+  flex: none;
+  width: 1px;
+  height: 22px;
+  background: var(--line-2);
+  margin-inline: 2px;
+}
+
+/* 2-up grid: 18 items with video demos is a browse problem, not a list
+   problem. Cards stay 2-up all the way down to 320px and widen past 560px. */
+.ex-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (min-width: 560px) {
+  .ex-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.ex-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  background: var(--bg-2);
+  overflow: hidden;
+  text-align: left;
+  transition: border-color 160ms ease, transform 120ms cubic-bezier(.16,1,.3,1);
+}
+.ex-card:active { transform: scale(.985); }
+.ex-card:hover  { border-color: var(--line-2); }
+.ex-card--active { border-color: var(--lime); }
+
+.ex-card__media {
+  position: relative;
+  aspect-ratio: 1;
+  background: #0a0c0e;
+  overflow: hidden;
+}
+.ex-card__media > video,
+.ex-card__media > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ex-card__tag {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 4px 7px;
+  border-radius: var(--r-1);
+  background: rgb(10 12 14 / .78);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--ink-2);
+}
+
+.ex-card__body { padding: 10px 11px 12px; display: grid; gap: 4px; }
+.ex-card__name {
+  font-size: 14.5px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.ex-card__meta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  letter-spacing: .02em;
+  color: var(--ink-3);
+}
+
+/* ---- detail sheet (slide-over, not a modal) ---- */
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: var(--z-sheet);
+  max-height: 88dvh;
+  max-width: 640px;
+  margin-inline: auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px var(--pad) calc(24px + var(--safe-b));
+  border-top: 1px solid var(--line-2);
+  border-radius: var(--r-3) var(--r-3) 0 0;
+  background: var(--bg-2);
+  box-shadow: var(--shadow-lift);
+  animation: sheet-in 240ms cubic-bezier(.16, 1, .3, 1) both;
+}
+/* motivation: the sheet arrives from the edge it is anchored to, so the
+   spatial model stays honest. Once, on open. */
+@keyframes sheet-in {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+.sheet__head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  background: var(--bg-2);
+}
+.sheet__close {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  background: var(--bg-3);
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.sheet__media {
+  aspect-ratio: 1;
+  width: min(100%, 320px);
+  border-radius: var(--r-3);
+  overflow: hidden;
+  background: #0a0c0e;
+  margin-bottom: 16px;
+}
+.sheet__media > video,
+.sheet__media > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.sheet__title {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.02em;
+  margin-bottom: 4px;
+  text-wrap: balance;
+}
+.sheet__sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .06em;
+  color: var(--ink-3);
+  margin-bottom: 16px;
+}
+.sheet__cue {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  margin-bottom: 12px;
+  text-wrap: pretty;
+}
+.sheet__stop {
+  padding: 10px 12px;
+  border-left: 2px solid var(--amber);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: rgb(255 171 61 / .07);
+  color: var(--amber);
+  font-size: 14px;
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+.sheet__rows { display: grid; gap: 0; margin-bottom: 16px; }
+.sheet__row {
+  display: grid;
+  grid-template-columns: 7.5em minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14.5px;
+}
+.sheet__row:last-child { border-bottom: 0; }
+.sheet__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: 3px;
+}
+.sheet__value { color: var(--ink-2); }
+.sheet__source { font-size: 13.5px; color: var(--ink-3); }
+.sheet__source a { font-weight: 600; }
+
+/* ============================================================ RUN  view === */
+
+/* Phase is a CSS variable so every channel (word, clock, rail, media edge,
+   ambient wash) recolours from one assignment. Default is GET READY. */
+#view-run { --phase: var(--amber); }
+
+body.work #view-run, #view-run[data-phase="work"] { --phase: var(--lime); }
+body.rest #view-run, #view-run[data-phase="rest"] { --phase: var(--cyan); }
+body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
+
+/* Third hook, kept in its own rule on purpose: :has() is unsupported on
+   Safari < 15.4 and an unknown pseudo-class inside a selector LIST invalidates
+   the whole list. Isolating it means the two hooks above always survive. */
+#view-run:has(#phase[data-phase="work"]) { --phase: var(--lime); }
+#view-run:has(#phase[data-phase="rest"]) { --phase: var(--cyan); }
+#view-run:has(#phase[data-phase="prep"]) { --phase: var(--amber); }
+
+/* Same definite-height rule as .view--scroll, and it matters most here: the
+   deck must stay pinned to the bottom of the SCREEN even when the "all
+   remaining" list is open, and the clock must never scroll out of sight. */
+.view--run {
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 0;
+  background: var(--bg);
+}
+
+/* Ambient wash tinted by the live phase. Not decoration: it is a redundant
+   channel for "which phase am I in", readable in peripheral vision from the
+   floor. Separate rule because color-mix() needs Safari 16.2+, and the flat
+   --bg above is the fallback. */
+@supports (background: color-mix(in srgb, red 10%, transparent)) {
+  .view--run {
+    background:
+      radial-gradient(120% 46% at 50% 0%,
+        color-mix(in srgb, var(--phase) 10%, transparent), transparent 68%),
+      var(--bg);
+  }
+}
+
+.progress-track {
+  flex: none;
+  height: 5px;
+  background: var(--bg-3);
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--phase);
+  transition: width 320ms linear, background-color 320ms ease;
+}
+
+.run__top {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(10px + var(--safe-t)) var(--pad) 6px;
+}
+.run__prog {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+/* End sits in the top corner, as far from the thumb deck as the screen
+   allows. Destructive actions do not belong next to +30s. */
+.run__end { padding: 0 16px; }
+
+.run__phase {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px var(--pad) 0;
+}
+.phase {
+  font-family: var(--font-mono);
+  font-size: clamp(22px, 7.2vw, 34px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--phase);
+  transition: color 260ms ease;
+}
+.side {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding: 4px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-1);
+  background: var(--bg-2);
+  white-space: nowrap;
+}
+.side:empty { display: none; }
+
+.clock {
+  flex: none;
+  padding: 0 var(--pad);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(96px, 38vw, 200px);
+  font-weight: 700;
+  line-height: .86;
+  letter-spacing: -.055em;
+  color: var(--phase);
+  transition: color 260ms ease;
+}
+
+.run__media {
+  flex: none;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  padding: 16px var(--pad) 0;
+}
+.run__vidwrap {
+  aspect-ratio: 1;
+  border-radius: var(--r-3);
+  overflow: hidden;
+  background: #0a0c0e;
+  border: 1px solid var(--line);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .03);
+}
+.run__vid { display: block; width: 100%; height: 100%; object-fit: cover; }
+.run__meta { display: grid; gap: 6px; min-width: 0; padding-top: 2px; }
+
+.ex-name {
+  font-size: clamp(20px, 5.8vw, 27px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+}
+.ex-cue {
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.ex-cue:empty { display: none; }
+
+.ex-stop {
+  flex: none;
+  margin: 12px var(--pad) 0;
+  padding: 9px 12px;
+  border-left: 2px solid var(--amber);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: rgb(255 171 61 / .08);
+  color: var(--amber);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+.ex-stop:empty { display: none; }
+.ex-stop:not(:empty)::before {
+  content: "Stop if ";
+  font-weight: 700;
+}
+
+.run__spacer { flex: 1 1 0; min-height: 12px; }
+
+.upnext {
+  flex: none;
+  min-height: 0;
+  padding: 0 var(--pad) 10px;
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+}
+.upnext__line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 40px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.upnext__line .label { flex: none; }
+#up-next {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#up-next:empty::before { content: "-"; color: var(--ink-3); }
+
+.upnext__all { min-height: 0; }
+.upnext__summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  cursor: pointer;
+  list-style: none;
+}
+.upnext__summary::-webkit-details-marker { display: none; }
+.upnext__summary::after {
+  content: "[ + ]";
+  margin-left: 8px;
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+}
+.upnext__all[open] .upnext__summary::after { content: "[ - ]"; }
+.upnext__all[open] #upcoming-list {
+  max-height: min(34dvh, 280px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 6px;
+}
+.queue--compact .queue-item { min-height: 40px; font-size: 14.5px; }
+
+/* ---- transport deck: the thing v1 got wrong ---- */
+.deck {
+  flex: none;
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-deck);
+  display: grid;
+  gap: 8px;
+  padding: 10px var(--pad) calc(10px + var(--safe-b));
+  background: var(--bg-2);
+  border-top: 1px solid var(--line-2);
+  box-shadow: var(--shadow-deck);
+}
+.deck__row { display: grid; gap: 8px; }
+.deck__row--main  { grid-template-columns: 1fr 1.5fr 1fr; }
+.deck__row--nudge { grid-template-columns: 1fr 1fr; }
+
+.tbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 68px;
+  padding: 0 8px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-2);
+  background: var(--bg-3);
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -.005em;
+  transition: background-color 140ms ease, transform 110ms cubic-bezier(.16,1,.3,1);
+}
+.tbtn:hover  { background: var(--bg-4); }
+.tbtn:active { transform: scale(.96); background: var(--bg-4); }
+
+.tbtn--primary {
+  background: var(--lime);
+  border-color: var(--lime);
+  color: var(--on-lime);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+.tbtn--primary:hover  { background: #d5f76a; }
+.tbtn--primary:active { background: var(--lime-dk); }
+
+.tbtn--sm {
+  min-height: 52px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ink-2);
+}
+
+/* sits above the deck, so the deck owns the safe-area inset, not this */
+.run__status {
+  flex: none;
+  padding: 2px var(--pad) 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--ink-3);
+  text-align: center;
+}
+.run__status:empty { display: none; }
+
+/* =========================================================== DONE  view === */
+.done {
+  flex: 1;
+  display: grid;
+  align-content: center;
+  gap: 16px;
+  padding: 32px var(--pad);
+}
+.done__mark {
+  font-family: var(--font-mono);
+  font-size: clamp(44px, 14vw, 68px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .06em;
+  color: var(--lime);
+}
+.done__summary {
+  max-width: 40ch;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.done__note { max-width: 44ch; }
+
+/* ================================================== responsive + a11y ==== */
+
+/* Short viewports (landscape phone, small Android): shrink the clock and drop
+   the demo clip rather than letting the deck fall off the screen. */
+@media (max-height: 660px) {
+  .clock { font-size: clamp(72px, 24vw, 120px); }
+  .run__media { grid-template-columns: 84px minmax(0, 1fr); padding-top: 10px; }
+  .tbtn { min-height: 58px; }
+  .tbtn--sm { min-height: 46px; }
+}
+@media (max-height: 540px) {
+  .run__media, .ex-stop { display: none; }
+}
+
+/* Wider screens: the app stays a phone-shaped instrument, it does not sprawl.
+   Only the library grid earns the extra column (handled above). */
+@media (min-width: 700px) {
+  :root { --pad: 24px; }
+}
+
+@media (prefers-contrast: more) {
+  :root { --ink-2: #d4dde2; --ink-3: #a6b2b9; --line: #404b52; --line-2: #55636b; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .view, .sheet { animation: none !important; }
+  .queue-item--skeleton .bone,
+  .ex-card--skeleton .bone,
+  .ex-card--skeleton .ex-card__media { background: var(--bg-3); }
+}
