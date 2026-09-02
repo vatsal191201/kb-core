@@ -5,10 +5,12 @@
 
   const SETTINGS_KEY = "kb-core-settings-v2";
   const HISTORY_KEY = "kb-core-history-v2";
+  const SESSION_KEY = "kb-core-session-v3";
   const LIMITS = { work: [20, 120], rest: [10, 60], rounds: [1, 6], prep: [0, 30] };
   const defaults = { work: 60, rest: 20, rounds: 3, prep: 10 };
   const $ = (selector) => document.querySelector(selector);
-  const setText = (selector, value) => { const el = $(selector); if (el) el.textContent = value; };
+  const cleanText = value => String(value == null ? "" : value).replace(/[—–]/g, "-");
+  const setText = (selector, value) => { const el = $(selector); if (el) el.textContent = cleanText(value); };
 
   function storedSettings() {
     try { return { ...defaults, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") }; }
@@ -20,7 +22,10 @@
     return Number.isFinite(value) ? Math.max(min, Math.min(max, Math.round(value))) : defaults[name];
   }
   const KB = window.KB = window.KB || {};
-  KB.settings = Object.fromEntries(Object.keys(defaults).map(k => [k, clamp(k, storedSettings()[k])]));
+  const saved = storedSettings();
+  KB.settings = Object.fromEntries(Object.keys(defaults).map(k => [k, clamp(k, saved[k])]));
+  KB.intensity = ["easy", "standard", "hard"].includes(saved.intensity) ? saved.intensity : "standard";
+  KB.focus = Array.isArray(saved.focus) ? saved.focus.filter(value => typeof value === "string") : [];
   KB.queue = [];
   KB.currentIndex = 0;
   KB.onQueueChange = KB.onQueueChange || null;
@@ -57,7 +62,10 @@
     return s.prep + n * s.work + Math.max(0, n - 1) * s.rest;
   }
   function updateTotal() { setText("#total-duration", fmt(totalSeconds())); }
-  function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(KB.settings)); } catch (_) {} }
+  function updateBuilderTotal() { setText("#builder-total", fmt(totalSeconds())); }
+  function saveSettings() {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...KB.settings, intensity: KB.intensity, focus: KB.focus })); } catch (_) {}
+  }
   function syncSettings() {
     Object.keys(defaults).forEach(name => {
       const input = $(`#set-${name}`);
@@ -65,28 +73,197 @@
       if (input) input.value = KB.settings[name];
       if (out) out.value = KB.settings[name];
     });
-    updateTotal();
+    updateTotal(); updateBuilderTotal();
   }
   function notifyQueue() { if (typeof KB.onQueueChange === "function") KB.onQueueChange(); }
   function notifyTick() { if (typeof KB.onTick === "function") KB.onTick(); }
 
-  async function rebuildQueue() {
+  function intensityOf(exercise) {
+    const explicit = Number(exercise && exercise.intensity);
+    if (Number.isFinite(explicit)) return explicit;
+    return exercise && exercise.level === "Advanced" ? 3 : exercise && exercise.level === "Intermediate" ? 2 : 1;
+  }
+  function orderOf(exercise) {
+    const explicit = Number(exercise && exercise.order);
+    if (Number.isFinite(explicit)) return explicit;
+    return exercise && exercise.position === "floor" ? 3 : exercise && exercise.position === "standing" ? 2 : 2;
+  }
+  function byOrder(a, b) { return orderOf(a) - orderOf(b) || String(a.name || a.id).localeCompare(String(b.name || b.id)); }
+  function matchesFocus(exercise) {
+    return !KB.focus.length || (Array.isArray(exercise.focus) && exercise.focus.some(value => KB.focus.includes(value)));
+  }
+  function eligibleExercises(exercises) {
+    return (Array.isArray(exercises) ? exercises : []).filter(exercise => exercise && exercise.id && (KB.intensity !== "easy" || intensityOf(exercise) !== 3));
+  }
+  function makeQueueExercise(exercise, block, round, finisher) {
+    return { id: exercise.id, name: exercise.name || exercise.id, mode: exercise.mode || "bilateral",
+      modeLabel: exercise.modeLabel || "", cue: exercise.cue || "", stop: exercise.stop || "", block, round,
+      finisher: Boolean(finisher), video: exercise.video || `media/${exercise.id}.mp4`, poster: exercise.poster || `media/${exercise.id}.jpg` };
+  }
+  function selectExercises(pool, count, offset) {
+    if (!pool.length || count < 1) return [];
+    const preferred = pool.filter(matchesFocus).sort(byOrder);
+    const remainder = pool.filter(exercise => !matchesFocus(exercise)).sort(byOrder);
+    const candidates = (preferred.length ? preferred.concat(remainder) : remainder);
+    const size = Math.min(count, candidates.length);
+    const start = KB.focus.length ? 0 : (offset * size) % candidates.length;
+    const unique = Array.from({ length: size }, (_, index) => candidates[(start + index) % candidates.length]);
+    return unique.sort(byOrder);
+  }
+  function generatedQueue(exercises, plan) {
+    const pool = eligibleExercises(exercises);
+    const slotCount = Math.max(1, (plan.rounds || []).length || pool.length);
+    const warmupCount = Math.min((plan.warmup || []).length, pool.length);
+    const cooldownCount = Math.min((plan.cooldown || []).length, pool.length);
+    const queue = [];
+    selectExercises(pool, warmupCount, 0).forEach(exercise => queue.push(makeQueueExercise(exercise, "Warm-up", 0)));
+    const rounds = KB.intensity === "easy" ? 2 : 3;
+    KB.settings.rounds = rounds;
+    for (let round = 1; round <= rounds; round++) {
+      selectExercises(pool, slotCount, round - 1).forEach(exercise => queue.push(makeQueueExercise(exercise, "Main", round)));
+    }
+    if (KB.intensity === "hard") {
+      const finisher = selectExercises(pool, 1, rounds)[0];
+      if (finisher) queue.push(makeQueueExercise(finisher, "Finisher", rounds + 1, true));
+    }
+    selectExercises(pool, cooldownCount, rounds).forEach(exercise => queue.push(makeQueueExercise(exercise, "Cool-down", 0)));
+    return queue;
+  }
+  function saveSession() { try { localStorage.setItem(SESSION_KEY, JSON.stringify(KB.queue)); } catch (_) {} }
+  function restoreSession(exercises) {
+    let savedSession = null;
+    try { savedSession = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (_) {}
+    if (!Array.isArray(savedSession)) return false;
+    const catalogue = new Map(exercises.map(exercise => [exercise.id, exercise]));
+    const restored = savedSession.map(item => {
+      const exercise = catalogue.get(item && item.id);
+      return exercise ? { ...makeQueueExercise(exercise, item.block || "Session", Number(item.round) || 0, item.finisher), ...item, name: exercise.name || item.name || item.id } : null;
+    }).filter(Boolean);
+    if (!restored.length && savedSession.length) return false;
+    KB.queue = restored; KB.currentIndex = 0;
+    return true;
+  }
+  async function rebuildQueue(options = {}) {
     const [plan, exercises] = await Promise.all([loadWorkout(), KB.loadExercises()]);
-    const catalogue = new Map(exercises.map(ex => [ex.id, ex]));
-    const add = (item, block, round) => {
-      const ex = catalogue.get(item.id) || {};
-      KB.queue.push({ id: item.id, name: ex.name || item.id, mode: ex.mode || "bilateral",
-        cue: item.cue || ex.cue || "", stop: item.stop || ex.stop || "", block, round,
-        video: ex.video || `media/${item.id}.mp4`, poster: ex.poster || `media/${item.id}.jpg` });
-    };
-    KB.queue = [];
-    (plan.warmup || []).forEach(item => add(item, "Warm-up", 0));
-    for (let round = 1; round <= KB.settings.rounds; round++) (plan.rounds || []).forEach(item => add(item, "Main", round));
-    (plan.cooldown || []).forEach(item => add(item, "Cool-down", 0));
-    KB.currentIndex = 0;
-    updateTotal();
-    notifyQueue();
+    if (!options.force && restoreSession(exercises)) {
+      updateTotal(); updateBuilderTotal(); notifyQueue(); renderBuilder(); return KB.queue;
+    }
+    KB.queue = generatedQueue(exercises, plan);
+    KB.currentIndex = 0; saveSettings(); saveSession(); syncSettings();
+    updateTotal(); updateBuilderTotal(); notifyQueue(); renderBuilder();
     return KB.queue;
+  }
+
+  function titleCase(value) { return String(value || "").replace(/[-_]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()); }
+  function renderIntensity() {
+    document.querySelectorAll("#intensity button[data-intensity]").forEach(button => {
+      const selected = button.dataset.intensity === KB.intensity;
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    setText("#run-intensity", titleCase(KB.intensity));
+  }
+  function renderFocus(exercises) {
+    const container = $("#focus-chips");
+    const list = Array.isArray(exercises) ? exercises : [];
+    const available = [...new Set(list.flatMap(exercise => Array.isArray(exercise.focus) ? exercise.focus : []))].sort((a, b) => a.localeCompare(b));
+    KB.focus = KB.focus.filter(value => available.includes(value));
+    const matched = eligibleExercises(list).filter(matchesFocus).length;
+    setText("#focus-count", String(matched));
+    if (!container) return;
+    container.replaceChildren();
+    available.forEach(focus => {
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "chip"; button.dataset.focus = focus;
+      button.textContent = titleCase(focus); button.setAttribute("aria-pressed", String(KB.focus.includes(focus)));
+      container.appendChild(button);
+    });
+  }
+  function setQueue(queue) {
+    KB.queue = Array.isArray(queue) ? queue : [];
+    KB.currentIndex = 0; saveSession(); updateTotal(); updateBuilderTotal(); notifyQueue(); renderBuilder();
+  }
+  function builderMeta(item) {
+    const parts = [item.block || "Session"];
+    if (item.round) parts.push(item.finisher ? "Finisher" : `Round ${item.round}`);
+    if (item.modeLabel) parts.push(item.modeLabel);
+    return cleanText(parts.join(" · "));
+  }
+  function button(label, action, index) {
+    const node = document.createElement("button");
+    node.type = "button"; node.className = "slot__btn"; node.dataset.action = action; node.dataset.index = String(index); node.textContent = label;
+    return node;
+  }
+  let pickerSwapIndex = null;
+  function renderBuilder() {
+    const list = $("#builder-list");
+    updateBuilderTotal();
+    if (!list) return;
+    list.replaceChildren();
+    if (!KB.queue.length) { list.textContent = "No exercises selected. Add an exercise to build your session."; return; }
+    KB.queue.forEach((item, index) => {
+      const row = document.createElement("div"); row.className = "slot"; row.dataset.index = String(index);
+      const copy = document.createElement("div");
+      const name = document.createElement("span"); name.className = "slot__name"; name.textContent = cleanText(item.name || item.id || "Exercise");
+      const meta = document.createElement("span"); meta.className = "slot__meta"; meta.textContent = builderMeta(item);
+      copy.append(name, meta);
+      const actions = document.createElement("div"); actions.className = "slot__actions";
+      actions.append(button("Swap", "swap", index), button("Remove", "remove", index), button("Up", "up", index), button("Down", "down", index));
+      row.append(copy, actions); list.appendChild(row);
+    });
+  }
+  async function renderPicker() {
+    const picker = $("#builder-picker");
+    if (!picker) return;
+    const exercises = await KB.loadExercises();
+    if (!Array.isArray(exercises)) return;
+    picker.replaceChildren();
+    exercises.slice().sort(byOrder).forEach(exercise => {
+      const item = document.createElement("button"); item.type = "button"; item.className = "picker-item"; item.dataset.exerciseId = exercise.id || "";
+      item.textContent = cleanText(`${exercise.name || exercise.id || "Exercise"}${exercise.modeLabel ? ` · ${exercise.modeLabel}` : ""}`);
+      picker.appendChild(item);
+    });
+    picker.hidden = false;
+  }
+  function closePicker() { const picker = $("#builder-picker"); if (picker) picker.hidden = true; pickerSwapIndex = null; }
+  async function addPickerExercise(id) {
+    const exercises = await KB.loadExercises();
+    if (!Array.isArray(exercises)) return;
+    const exercise = exercises.find(item => item.id === id);
+    if (!exercise) return;
+    const queue = KB.queue.slice();
+    const replacing = Number.isInteger(pickerSwapIndex) ? queue[pickerSwapIndex] : null;
+    const item = makeQueueExercise(exercise, replacing?.block || "Custom", Number(replacing?.round) || 0, replacing?.finisher);
+    if (replacing) queue.splice(pickerSwapIndex, 1, item);
+    else queue.push(item);
+    closePicker(); setQueue(queue);
+  }
+  function wireBuilder() {
+    const list = $("#builder-list");
+    if (list && !list.dataset.builderWired) {
+      list.dataset.builderWired = "true";
+      list.addEventListener("click", event => {
+        const action = event.target.closest("button[data-action]"); if (!action) return;
+        const index = Number(action.dataset.index); if (!Number.isInteger(index) || !KB.queue[index]) return;
+        if (action.dataset.action === "swap") { pickerSwapIndex = index; renderPicker(); return; }
+        const queue = KB.queue.slice();
+        if (action.dataset.action === "remove") queue.splice(index, 1);
+        if (action.dataset.action === "up" && index > 0) [queue[index - 1], queue[index]] = [queue[index], queue[index - 1]];
+        if (action.dataset.action === "down" && index < queue.length - 1) [queue[index + 1], queue[index]] = [queue[index], queue[index + 1]];
+        setQueue(queue);
+      });
+    }
+    const picker = $("#builder-picker");
+    if (picker && !picker.dataset.builderWired) {
+      picker.dataset.builderWired = "true";
+      picker.addEventListener("click", event => {
+        const item = event.target.closest("button.picker-item[data-exercise-id]");
+        if (item) addPickerExercise(item.dataset.exerciseId);
+      });
+    }
+    wire("#btn-add-exercise", () => { pickerSwapIndex = null; renderPicker(); });
+    wire("#btn-regenerate", () => rebuildQueue({ force: true }));
+    wire("#btn-builder-back", () => showView("view-home"));
+    wire("#btn-edit-session", () => { renderBuilder(); showView("view-builder"); });
   }
 
   let audio = null, wakeLock = null;
@@ -131,6 +308,14 @@
     const video = $("#vid");
     if (!video || !exercise) return;
     video.autoplay = true; video.loop = true; video.muted = true; video.playsInline = true;
+    video.setAttribute("muted", ""); video.setAttribute("playsinline", ""); video.setAttribute("preload", "auto");
+    if (!video.dataset.fallbackWired) {
+      video.dataset.fallbackWired = "true";
+      video.addEventListener("error", () => {
+        // Keep the poster visible if a future clip has not been deployed yet.
+        try { video.removeAttribute("src"); video.load(); } catch (_) {}
+      });
+    }
     if (video.dataset.exercise !== exercise.id) {
       video.dataset.exercise = exercise.id; video.src = exercise.video; video.poster = exercise.poster; video.load();
     }
@@ -143,6 +328,7 @@
     KB.currentIndex = segment.exerciseIndex;
     timer.switched = false; timer.lastSecond = null;
     const phase = segment.type === "prep" ? "GET READY" : segment.type.toUpperCase();
+    setText("#run-intensity", titleCase(KB.intensity));
     setText("#phase", phase);
     setText("#ex-name", ex?.name || ""); setText("#name", ex?.name || "");
     setText("#ex-cue", segment.type === "rest" ? (KB.queue[segment.exerciseIndex + 1]?.cue || "") : (ex?.cue || ""));
@@ -260,9 +446,31 @@
     Object.keys(defaults).forEach(name => {
       const input = $(`#set-${name}`); if (!input) return;
       input.min = LIMITS[name][0]; input.max = LIMITS[name][1]; input.value = KB.settings[name];
-      input.addEventListener("input", () => { KB.settings[name] = clamp(name, input.value); input.value = KB.settings[name]; saveSettings(); syncSettings(); rebuildQueue(); });
+      input.addEventListener("input", () => { KB.settings[name] = clamp(name, input.value); input.value = KB.settings[name]; saveSettings(); syncSettings(); });
     });
-    syncSettings(); rebuildQueue(); renderHistory();
+    document.querySelectorAll("#intensity button[data-intensity]").forEach(button => {
+      if (button.dataset.intensity && !button.dataset.intensityWired) {
+        button.dataset.intensityWired = "true";
+        button.addEventListener("click", () => {
+          const intensity = button.dataset.intensity;
+          if (!["easy", "standard", "hard"].includes(intensity)) return;
+          KB.intensity = intensity; saveSettings(); renderIntensity(); rebuildQueue({ force: true });
+        });
+      }
+    });
+    const focusChips = $("#focus-chips");
+    if (focusChips && !focusChips.dataset.focusWired) {
+      focusChips.dataset.focusWired = "true";
+      focusChips.addEventListener("click", event => {
+        const button = event.target.closest("button[data-focus]"); if (!button || !focusChips.contains(button)) return;
+        const focus = button.dataset.focus; if (!focus) return;
+        KB.focus = KB.focus.includes(focus) ? KB.focus.filter(value => value !== focus) : KB.focus.concat(focus);
+        saveSettings(); KB.loadExercises().then(exercises => { renderFocus(exercises); rebuildQueue({ force: true }); }).catch(() => {});
+      });
+    }
+    syncSettings(); renderIntensity(); wireBuilder();
+    KB.loadExercises().then(exercises => renderFocus(exercises)).catch(() => {});
+    rebuildQueue(); renderHistory();
     wire("#btn-start", start); wire("#go", start);
     wire("#btn-pause", () => setPaused(!timer.paused)); wire("#resume", () => setPaused(false));
     wire("#btn-skip", () => moveTo(timer.index + 1)); wire("#btn-prev", () => moveTo(timer.index - 1));

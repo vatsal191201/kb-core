@@ -23,7 +23,7 @@
   function addText(parent, tag, className, value) {
     const node = document.createElement(tag);
     if (className) node.className = className;
-    node.textContent = value == null ? "" : String(value);
+    node.textContent = value == null ? "" : String(value).replace(/[—–]/g, "-");
     parent.appendChild(node);
     return node;
   }
@@ -49,6 +49,10 @@
     video.setAttribute("loop", "");
     video.poster = exercise.poster || "";
     video.src = exercise.video || "";
+    video.addEventListener("error", () => {
+      // A missing future clip must leave its poster/card usable.
+      try { video.removeAttribute("src"); video.load(); } catch (_) {}
+    }, { once: true });
     video.setAttribute("aria-label", `${exercise.name || "Exercise"} demonstration`);
     return video;
   }
@@ -146,7 +150,7 @@
     credit.href = exercise.sourceUrl || "#";
     credit.target = "_blank";
     credit.rel = "noopener";
-    credit.textContent = `Source: ${exercise.sourceTitle || "Video"}${exercise.sourceChannel ? ` — ${exercise.sourceChannel}` : ""}`;
+    credit.textContent = `Source: ${exercise.sourceTitle || "Video"}${exercise.sourceChannel ? ` - ${exercise.sourceChannel}` : ""}`;
     detail.appendChild(credit);
     detail.hidden = false;
     video.play().catch(() => {});
