@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>KB Core</title>
-<meta name="description" content="Personal kettlebell core session timer. Editable work and rest intervals, an 18-exercise video library, and full transport controls. Works offline.">
+<meta name="description" content="Personal kettlebell core session timer. Pick an intensity and a focus, edit the session exercise by exercise, then run it with full transport controls. Works offline.">
 <meta name="theme-color" content="#0e1113">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,6 +20,12 @@
 
 <a class="skip-link" href="#view-home">Skip to content</a>
 
+<!-- NOTE ON <section>: only the five top-level views are <section> elements.
+     showView() in app.js hides sections by selector, so every grouping box
+     INSIDE a view is a <div class="panel"> with role="group". A nested
+     <section> would be swept up and hidden on the first view change and never
+     come back. Keep it that way. -->
+
 <main id="app">
 
 <!-- ======================================================== HOME ======= -->
@@ -31,7 +37,7 @@
     <!-- Complaint #1 lived here: there was no way to see the exercises without
          starting the workout. One entry point, always on screen. -->
     <button type="button" id="btn-open-library" class="btn btn--ghost btn--sm">
-      Exercises <span class="btn__count">18</span>
+      Exercises <span class="btn__count" id="library-count">18</span>
     </button>
   </header>
 
@@ -44,12 +50,57 @@
         <span class="today__unit">total</span>
       </p>
       <p class="today__shape">
-        Warm-up, <b>five moves</b> per round, cool-down. Every interval and
-        side switch is called out loud, so the phone can sit on the floor.
+        Warm-up, <b>main rounds</b>, cool-down. Every interval and side switch
+        is called out loud, so the phone can sit on the floor.
       </p>
     </div>
 
-    <section class="panel" aria-labelledby="h-timing">
+    <!-- Complaint #2: v2 dropped the intensity selector entirely. It comes
+         back directly under the total, above the fine-tuning knobs, because it
+         is the one decision that changes what the session actually is. -->
+    <div class="block" role="group" aria-labelledby="h-intensity">
+      <h2 class="label" id="h-intensity">Intensity</h2>
+      <div id="intensity" class="seg">
+        <button type="button" class="seg__opt" data-intensity="easy" aria-pressed="false">
+          <span class="seg__name">Easy</span>
+          <span class="seg__note">2 rounds</span>
+        </button>
+        <button type="button" class="seg__opt" data-intensity="standard" aria-pressed="true">
+          <span class="seg__name">Standard</span>
+          <span class="seg__note">3 rounds</span>
+        </button>
+        <button type="button" class="seg__opt" data-intensity="hard" aria-pressed="false">
+          <span class="seg__name">Hard</span>
+          <span class="seg__note">3 rounds + finisher</span>
+        </button>
+      </div>
+      <p class="hint">
+        Easy keeps the advanced lifts out of the pool. Hard puts a finisher on
+        the end. The rounds box below follows whichever you pick.
+      </p>
+    </div>
+
+    <div class="panel" role="group" aria-labelledby="h-focus">
+      <div class="panel__head">
+        <h2 class="label" id="h-focus">Focus</h2>
+        <p class="count" id="focus-count"></p>
+      </div>
+      <!-- Agent B injects button.chip[data-focus] here, derived from the data.
+           The focus names are NEVER written in this file: adding an exercise
+           with a new focus tag has to be a data-only change. -->
+      <div id="focus-chips" class="chipwrap" role="group" aria-label="Areas of focus">
+        <span class="chip chip--skeleton" aria-hidden="true"></span>
+        <span class="chip chip--skeleton chip--skeleton-w2" aria-hidden="true"></span>
+        <span class="chip chip--skeleton chip--skeleton-w3" aria-hidden="true"></span>
+        <span class="chip chip--skeleton" aria-hidden="true"></span>
+      </div>
+      <p class="hint">
+        Pick none for a balanced full-core session. Pick one or more and the
+        generator leans that way without dropping the rest.
+      </p>
+    </div>
+
+    <div class="panel" role="group" aria-labelledby="h-timing">
       <h2 class="label" id="h-timing">Timing</h2>
       <div class="fields">
 
@@ -98,11 +149,13 @@
         Work 20 to 120 s, rest 10 to 60 s. Total above recalculates as you
         type, and the numbers are saved on this phone.
       </p>
-    </section>
+    </div>
 
-    <section class="panel" aria-labelledby="h-preview">
+    <div class="panel" role="group" aria-labelledby="h-preview">
       <div class="panel__head">
-        <h2 class="label" id="h-preview">Every interval, in order</h2>
+        <h2 class="label" id="h-preview">Session order</h2>
+        <!-- Complaint #3: no way to choose the exercises. This is the door. -->
+        <button type="button" id="btn-edit-session" class="btn btn--ghost btn--sm">Edit session</button>
       </div>
       <!-- Agent B fills this with .queue-item rows. Skeletons match the final
            row shape so nothing shifts when the real list lands. -->
@@ -120,20 +173,93 @@
           <span class="bone"></span><span class="bone"></span><span class="bone"></span>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="panel" aria-labelledby="h-history">
+    <div class="panel" role="group" aria-labelledby="h-history">
       <h2 class="label" id="h-history">Recent sessions</h2>
       <!-- Agent C replaces the empty state with .history-item rows. -->
       <div id="history-list" class="history">
         <p class="empty">No sessions logged yet. Finish one and it lands here with the date, length and intensity.</p>
       </div>
-    </section>
+    </div>
 
   </div>
 
   <div class="actionbar">
     <button type="button" id="btn-start" class="btn btn--primary btn--xl">Start session</button>
+  </div>
+
+</section>
+
+
+<!-- ===================================================== BUILDER ======= -->
+<!-- The session, editable. Rows are injected by the JS agent; every control
+     here is a real button, because drag-to-reorder is unreliable on a phone
+     with sweaty hands and no hover. -->
+<section id="view-builder" class="view view--scroll hidden" aria-label="Edit session">
+
+  <header class="topbar">
+    <button type="button" id="btn-builder-back" class="btn btn--ghost btn--sm">Back</button>
+    <h1 class="topbar__title">Edit session</h1>
+    <span class="topbar__spacer"></span>
+    <button type="button" id="btn-regenerate" class="btn btn--ghost btn--sm">Regenerate</button>
+  </header>
+
+  <div class="view__body">
+
+    <div class="today today--sm">
+      <p class="label">This session</p>
+      <p class="today__total">
+        <span id="builder-total">--:--</span>
+        <span class="today__unit">total</span>
+      </p>
+    </div>
+
+    <div class="panel" role="group" aria-labelledby="h-builder">
+      <div class="panel__head">
+        <h2 class="label" id="h-builder">Session order</h2>
+        <p class="count" id="builder-count"></p>
+      </div>
+
+      <!-- Agent B injects .slot rows here. -->
+      <div id="builder-list" class="slots">
+        <div class="slot slot--skeleton" aria-hidden="true">
+          <span class="bone bone--idx"></span>
+          <span class="bone"></span>
+          <span class="bone bone--short"></span>
+        </div>
+        <div class="slot slot--skeleton" aria-hidden="true">
+          <span class="bone bone--idx"></span>
+          <span class="bone"></span>
+          <span class="bone bone--short"></span>
+        </div>
+        <div class="slot slot--skeleton" aria-hidden="true">
+          <span class="bone bone--idx"></span>
+          <span class="bone"></span>
+          <span class="bone bone--short"></span>
+        </div>
+      </div>
+
+      <button type="button" id="btn-add-exercise" class="btn btn--ghost btn--wide">Add exercise</button>
+
+      <p class="hint">
+        Up and down move a slot. Swap trades it for another exercise. Remove
+        takes it out. Every change is saved to this phone straight away.
+      </p>
+    </div>
+
+    <div class="panel" role="group" aria-labelledby="h-picker">
+      <div class="panel__head">
+        <h2 class="label" id="h-picker">Add from the library</h2>
+        <p class="count" id="picker-count"></p>
+      </div>
+      <!-- Agent B injects .picker-item buttons here. The list scrolls inside
+           the panel so the session above never leaves the screen. -->
+      <div id="builder-picker" class="picker">
+        <p class="empty">The full exercise library lands here. Tap a row to append it to the session.</p>
+      </div>
+    </div>
+
   </div>
 
 </section>
@@ -197,6 +323,9 @@
 
   <header class="run__top">
     <p id="prog-text" class="run__prog">1 / 22</p>
+    <!-- You always know what you picked, mid-session, without leaving the run
+         view. Quiet on purpose: the clock is what you read from the floor. -->
+    <p id="run-intensity" class="run__intensity"></p>
     <button type="button" id="btn-end" class="btn btn--ghost btn--sm run__end">End</button>
   </header>
 

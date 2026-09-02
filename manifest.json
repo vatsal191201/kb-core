@@ -1,7 +1,7 @@
 {
   "name": "KB Core",
   "short_name": "KB Core",
-  "description": "Personal kettlebell core session timer with an 18-exercise video library. Works offline.",
+  "description": "Personal kettlebell core session timer. Choose the intensity and focus, edit the session, run it with a video library. Works offline.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

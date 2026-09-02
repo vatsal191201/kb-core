@@ -92,6 +92,62 @@
    Active styling responds to BOTH [aria-pressed="true"] and .is-active, so
    use whichever you prefer.
 
+   #focus-chips  <-  repeat of:
+     <button type="button" class="chip" data-focus="obliques" aria-pressed="false">
+       Obliques
+     </button>
+   Multi-select. Same .chip styling as the library filter row, so a selected
+   focus and a selected filter read identically. Wipe the .chip--skeleton
+   placeholders when you inject. The focus NAMES are deliberately absent from
+   index.html: derive them from exercises.json so a new tag needs no markup
+   edit. Put the match count in #focus-count as plain text ("9 exercises
+   match"); it hides itself when empty.
+
+   #intensity  <-  three buttons already in the markup, one per level:
+     button.seg__opt[data-intensity="easy|standard|hard"]
+   Maintain aria-pressed on all three (exactly one true). Active styling
+   responds to BOTH [aria-pressed="true"] and .is-active. Do not rebuild these
+   nodes; the .seg__name / .seg__note copy is layout, not data.
+
+   #builder-list  <-  repeat of:
+     <div class="slot" data-id="halo">
+       <span class="slot__handle">01</span>
+       <p class="slot__name">Kettlebell Halo</p>
+       <p class="slot__meta">Warm-up / 60s</p>
+       <div class="slot__actions">
+         <button class="slot__btn" data-act="up">Up</button>
+         <button class="slot__btn" data-act="down">Down</button>
+         <button class="slot__btn" data-act="swap">Swap</button>
+         <button class="slot__btn" data-act="remove">Remove</button>
+       </div>
+     </div>
+   Every child is explicitly grid-placed, so DOM order inside .slot does not
+   matter and a slot with only .slot__name still renders. Notes:
+     - .slot__btn is 44px minimum on both axes. Use `disabled` on Up for the
+       first slot and Down for the last; the disabled style is done.
+     - "Remove" is tinted amber (the app's caution colour) automatically when
+       it carries .slot__btn--danger, [data-act="remove"] or
+       [data-action="remove"]. Any of the three works.
+     - .slot--current is styled if you want to mark a slot.
+   Wipe the .slot--skeleton placeholders when you inject.
+
+   #builder-picker  <-  repeat of:
+     <button type="button" class="picker-item" data-id="halo">
+       <span class="picker-item__name">Kettlebell Halo</span>
+       <span class="picker-item__meta">Beginner / obliques, shoulders</span>
+     </button>
+   The row prints its own "+ ADD" affordance from CSS, so do NOT emit an add
+   label. .picker-item--in dims a row and switches that affordance to "IN" for
+   exercises already in the session. The panel scrolls internally; you do not
+   need to cap the list. A bare .picker-item with text and no spans still
+   renders correctly.
+
+   #builder-total and #builder-count / #picker-count are plain text sinks.
+   The two counts hide themselves when empty.
+
+   #library-count is the number inside the "Exercises" button on home. It ships
+   with 18 in the markup; overwrite it from the data so it cannot go stale.
+
    ============================================================================
    CONTRACT FOR AGENT C (app.js) - THINGS CSS EXPECTS YOU TO DO
    ----------------------------------------------------------------------------
@@ -111,6 +167,12 @@
    5. #btn-pause: swap its textContent between "Pause" and "Resume". Nothing
       else needs to change; the key keeps its accent fill either way.
    6. Views are shown / hidden with the `hidden` CLASS (not the attribute).
+   7. There are now FIVE views: #view-home, #view-builder, #view-library,
+      #view-run, #view-done. showView() must hide all five. Note that no
+      grouping box inside a view is a <section> any more, precisely so a
+      querySelectorAll("section") sweep cannot hide the panels along with them.
+   8. #run-intensity is the level label in the run view top bar. Set its
+      textContent to "Easy" / "Standard" / "Hard"; it collapses when empty.
    ============================================================================ */
 
 /* ---------------------------------------------------------------- tokens -- */
@@ -293,10 +355,17 @@ a { color: var(--lime); text-underline-offset: 3px; }
 .wordmark span { color: var(--ink-2); }
 
 .topbar__title {
+  /* the builder bar carries Back + title + Regenerate. If that ever gets too
+     wide the title truncates; a shrunken button with clipped text does not. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 17px;
   font-weight: 650;
   letter-spacing: -.01em;
 }
+.topbar .btn { flex: none; }
 .topbar__spacer { margin-left: auto; }
 
 /* --------------------------------------------------------------- buttons -- */
@@ -337,6 +406,9 @@ a { color: var(--lime); text-underline-offset: 3px; }
 }
 
 .btn--sm { min-height: 44px; padding: 0 14px; font-size: 14.5px; }
+
+/* full-width secondary action that sits inside a panel, under a list */
+.btn--wide { width: 100%; }
 
 .btn__count {
   font-family: var(--font-mono);
@@ -381,12 +453,31 @@ a { color: var(--lime); text-underline-offset: 3px; }
   gap: 14px;
   align-content: start;
 }
+/* An unwrapped group: a label plus its control, no card chrome. Used where the
+   control is important enough that a border would demote it to "one more row"
+   (the intensity selector, the two duration readouts). */
+.block { display: grid; gap: 10px; align-content: start; }
+
 .panel__head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  /* a 44px button can share this row with the heading; at 320px it wraps
+     instead of pushing the panel wider than the viewport */
+  flex-wrap: wrap;
+  gap: 8px 12px;
 }
+
+/* the small mono readout that sits opposite a panel heading
+   ("9 exercises match", "12 intervals") */
+.count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  color: var(--ink-3);
+}
+.count:empty { display: none; }
 
 /* =========================================================== HOME  view === */
 
@@ -424,6 +515,85 @@ a { color: var(--lime); text-underline-offset: 3px; }
   text-wrap: pretty;
 }
 .today__shape b { color: var(--ink); font-weight: 650; }
+
+/* the same readout at working size, for the builder view where the total is a
+   live consequence of your edits rather than the headline of the screen */
+.today--sm .today__total { font-size: clamp(34px, 10vw, 46px); }
+
+/* ---- intensity: the control v2 deleted ---- */
+/* A three-key segment, not a dropdown and not a slider. All three levels and
+   what each one costs you are legible in one glance, and switching is one tap
+   with no menu in between. */
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.seg__opt {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-height: 76px;
+  padding: 11px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-2);
+  background: var(--bg-3);
+  text-align: left;
+  transition: background-color 150ms ease, border-color 150ms ease,
+              transform 120ms cubic-bezier(.16, 1, .3, 1);
+}
+.seg__opt:hover  { background: var(--bg-4); }
+.seg__opt:active { transform: scale(.98); }
+
+.seg__name {
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -.015em;
+  color: var(--ink);
+}
+.seg__note {
+  /* two lines reserved so the three keys stay the same height whether the
+     explainer is "2 rounds" or "3 rounds + finisher" */
+  min-height: 2.7em;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.35;
+  letter-spacing: .03em;
+  color: var(--ink-3);
+  text-wrap: pretty;
+}
+
+/* Selected is a filled lime key against two dark ones. Readable in peripheral
+   vision, survives greyscale, and matches the active-chip language exactly. */
+.seg__opt[aria-pressed="true"], .seg__opt.is-active {
+  background: var(--lime);
+  border-color: var(--lime);
+}
+.seg__opt[aria-pressed="true"]:hover, .seg__opt.is-active:hover { background: #d5f76a; }
+.seg__opt[aria-pressed="true"] .seg__name,
+.seg__opt.is-active .seg__name { color: var(--on-lime); }
+.seg__opt[aria-pressed="true"] .seg__note,
+.seg__opt.is-active .seg__note { color: rgb(13 18 6 / .74); }
+.seg__opt[aria-pressed="true"]:focus-visible,
+.seg__opt.is-active:focus-visible { outline-color: var(--ink); }
+
+/* ---- focus chips ---- */
+/* Wrapping, not the horizontal scroller the library filters use: this set is
+   short, multi-select, and you need to see every option before choosing. */
+.chipwrap { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.chip--skeleton {
+  pointer-events: none;
+  width: 96px;
+  border-color: var(--line);
+  background: linear-gradient(90deg, var(--bg-3), var(--bg-4), var(--bg-3));
+  background-size: 220% 100%;
+  animation: bone 1.4s ease-in-out infinite;
+}
+.chip--skeleton-w2 { width: 128px; }
+.chip--skeleton-w3 { width: 78px; }
 
 /* ---- timing fields ---- */
 .fields {
@@ -624,6 +794,192 @@ a { color: var(--lime); text-underline-offset: 3px; }
   padding: 14px var(--pad) calc(14px + var(--safe-b));
   background: linear-gradient(rgb(14 17 19 / 0), var(--bg) 42%);
 }
+
+/* ======================================================== BUILDER  view === */
+
+/* Two stacked panels: the session you have, then the library you can pull
+   from. Both visible on the same screen, because "what is in my session" and
+   "what could be in my session" is one decision, not two. */
+
+.slots { display: grid; gap: 8px; }
+
+/* Every child is explicitly placed, so the JS agent can emit them in any
+   order and a slot carrying only a name still lays out correctly. */
+.slot {
+  display: grid;
+  grid-template-columns: 2.4em minmax(0, 1fr);
+  gap: 2px 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--line-2);
+  border-radius: var(--r-1);
+  background: var(--bg-3);
+}
+.slot--current { border-left-color: var(--lime); background: rgb(201 242 74 / .07); }
+
+.slot__handle {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+}
+.slot__name {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.slot__meta {
+  grid-column: 2;
+  grid-row: 2;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.slot__meta:empty { display: none; }
+
+/* Reorder lives on its own row, right-aligned, at full thumb size. Four 44px
+   keys do not fit beside an exercise name at 390px, and shrinking them below
+   44px to make them fit would be the wrong trade. Wraps if a label grows. */
+.slot__actions {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+.slot__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-1);
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: background-color 140ms ease, color 140ms ease,
+              transform 110ms cubic-bezier(.16, 1, .3, 1);
+}
+.slot__btn:hover  { background: var(--bg-4); color: var(--ink); }
+.slot__btn:active { transform: scale(.96); }
+.slot__btn:disabled {
+  opacity: .34;
+  cursor: default;
+  transform: none;
+  background: var(--bg-2);
+  color: var(--ink-2);
+}
+
+/* Removal is the one destructive control in the app, so it borrows the amber
+   caution language rather than getting a colour of its own. Three hooks, use
+   whichever the markup already has. */
+.slot__btn--danger,
+.slot__btn[data-act="remove"],
+.slot__btn[data-action="remove"] {
+  color: var(--amber);
+  border-color: rgb(255 171 61 / .42);
+}
+.slot__btn--danger:hover,
+.slot__btn[data-act="remove"]:hover,
+.slot__btn[data-action="remove"]:hover {
+  color: var(--amber);
+  background: rgb(255 171 61 / .1);
+}
+
+.slot--skeleton {
+  pointer-events: none;
+  align-items: center;
+  min-height: 66px;
+}
+.slot--skeleton .bone {
+  display: block;
+  height: 11px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--bg-2), var(--bg-4), var(--bg-2));
+  background-size: 220% 100%;
+  animation: bone 1.4s ease-in-out infinite;
+}
+.slot--skeleton .bone--idx { grid-column: 1; grid-row: 1 / span 2; width: 20px; }
+
+/* ---- the add-from-library list ---- */
+/* Scrolls inside its panel so the session order stays on screen while you
+   pick. Zebra rows rather than a hairline under all 18 of them. */
+.picker {
+  display: grid;
+  gap: 2px;
+  max-height: min(48dvh, 420px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.picker-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1px 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 10px;
+  border-radius: var(--r-1);
+  color: var(--ink-2);
+  font-size: 15px;
+  text-align: left;
+  transition: background-color 150ms ease;
+}
+.picker-item:nth-child(odd) { background: rgb(255 255 255 / .022); }
+.picker-item:hover  { background: var(--bg-3); }
+.picker-item:active { background: var(--bg-4); }
+
+.picker-item__name {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  font-size: 14.5px;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.picker-item__meta {
+  grid-column: 1;
+  grid-row: 2;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  letter-spacing: .02em;
+  color: var(--ink-3);
+}
+/* the affordance is CSS, so the injected rows carry data and nothing else */
+.picker-item::after {
+  content: "+ Add";
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--lime);
+}
+.picker-item--in { opacity: .55; }
+.picker-item--in::after { content: "In"; color: var(--ink-3); }
 
 /* ======================================================== LIBRARY  view === */
 
@@ -910,8 +1266,10 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   flex: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  /* End is pushed right by its own auto margin, which leaves the progress
+     count and the intensity badge grouped together on the left */
+  justify-content: flex-start;
+  gap: 10px;
   padding: calc(10px + var(--safe-t)) var(--pad) 6px;
 }
 .run__prog {
@@ -922,9 +1280,27 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   text-transform: uppercase;
   color: var(--ink-3);
 }
+/* The level you chose, still on screen mid-session. Deliberately quiet: it is
+   reference, not state, so it does not take the phase colour and does not
+   compete with the clock. */
+.run__intensity {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  padding: 3px 8px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-1);
+  white-space: nowrap;
+}
+.run__intensity:empty { display: none; }
+
 /* End sits in the top corner, as far from the thumb deck as the screen
    allows. Destructive actions do not belong next to +30s. */
-.run__end { padding: 0 16px; }
+.run__end { margin-left: auto; padding: 0 16px; }
 
 .run__phase {
   flex: none;
@@ -1199,6 +1575,15 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   :root { --pad: 24px; }
 }
 
+/* Very narrow phones: the three intensity keys stay in one row (a stacked
+   segment stops reading as one control), the type just tightens. */
+@media (max-width: 339px) {
+  .seg { gap: 6px; }
+  .seg__opt { padding: 9px 8px; }
+  .seg__name { font-size: 14px; }
+  .slot__btn { padding: 0 10px; font-size: 13px; }
+}
+
 @media (prefers-contrast: more) {
   :root { --ink-2: #d4dde2; --ink-3: #a6b2b9; --line: #404b52; --line-2: #55636b; }
 }
@@ -1212,6 +1597,8 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   }
   .view, .sheet { animation: none !important; }
   .queue-item--skeleton .bone,
+  .slot--skeleton .bone,
+  .chip--skeleton,
   .ex-card--skeleton .bone,
   .ex-card--skeleton .ex-card__media { background: var(--bg-3); }
 }
