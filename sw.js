@@ -1,4 +1,4 @@
-const CACHE = "kbcore-v10";
+const CACHE = "kbcore-v12";
 
 // Precache the shell. Media clips are large, so they are cached lazily on
 // first play by the fetch handler below.
@@ -8,6 +8,8 @@ const SHELL = [
   "styles.css",
   "app.js",
   "library.js",
+  "sources.js",
+  "sources.json",
   "workout.json",
   "exercises.json",
   "manifest.json",

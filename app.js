@@ -47,9 +47,13 @@
   };
 
   window.showView = function (id) {
-    document.querySelectorAll("section").forEach(section => section.classList.add("hidden"));
+    // Only toggle TOP-LEVEL views. `document.querySelectorAll("section")` also
+    // matches sections nested inside a view (e.g. the video player inside
+    // #view-sources) and would hide them permanently.
+    document.querySelectorAll("section.view, body > section").forEach(section => section.classList.add("hidden"));
     const next = document.getElementById(id);
     if (next) next.classList.remove("hidden");
+    window.scrollTo(0, 0);
   };
 
   function fmt(seconds) {
@@ -202,13 +206,17 @@
     if (!KB.queue.length) { list.textContent = "No exercises selected. Add an exercise to build your session."; return; }
     KB.queue.forEach((item, index) => {
       const row = document.createElement("div"); row.className = "slot"; row.dataset.index = String(index);
-      const copy = document.createElement("div");
+      // styles.css lays .slot out as a GRID and positions .slot__handle /
+      // .slot__name / .slot__meta / .slot__actions into explicit cells. Wrapping
+      // name+meta in an extra unstyled <div> made them one anonymous grid item,
+      // which collapsed the column and wrapped every word onto its own line.
+      // Append them as DIRECT children so the grid placement applies.
+      const handle = document.createElement("span"); handle.className = "slot__handle"; handle.textContent = String(index + 1);
       const name = document.createElement("span"); name.className = "slot__name"; name.textContent = cleanText(item.name || item.id || "Exercise");
       const meta = document.createElement("span"); meta.className = "slot__meta"; meta.textContent = builderMeta(item);
-      copy.append(name, meta);
       const actions = document.createElement("div"); actions.className = "slot__actions";
       actions.append(button("Swap", "swap", index), button("Remove", "remove", index), button("Up", "up", index), button("Down", "down", index));
-      row.append(copy, actions); list.appendChild(row);
+      row.append(handle, name, meta, actions); list.appendChild(row);
     });
   }
   async function renderPicker() {

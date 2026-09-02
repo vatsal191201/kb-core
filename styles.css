@@ -1602,3 +1602,110 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   .ex-card--skeleton .bone,
   .ex-card--skeleton .ex-card__media { background: var(--bg-3); }
 }
+
+
+/* ==================================================== SOURCE VIDEOS ======
+   "Follow the original video" - the third training mode. Same instrument
+   language as the rest of the app: flat panels, one accent, hairline rules,
+   mono numerals. No new colours introduced. */
+
+.note--pad { padding: 0 var(--pad); }
+
+.sources {
+  display: grid;
+  gap: 10px;
+  padding: 12px var(--pad) 20px;
+}
+
+.source {
+  background: var(--panel, #141a1e);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+.source__title {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+}
+.source__meta {
+  margin: 4px 0 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.source__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.source__actions .btn { min-height: 44px; }   /* thumb target */
+
+/* --- player --- */
+.player {
+  margin: 4px var(--pad) 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  overflow: hidden;
+  background: #000;
+}
+.player__frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+.player__frame iframe {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; border: 0; display: block;
+}
+.player__bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 10px 12px;
+  background: var(--panel, #141a1e);
+  border-top: 1px solid var(--line);
+}
+.player__title {
+  font-size: 13px; color: var(--ink-2, #b9c2c7);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* --- chapter jump list --- */
+.chapters {
+  padding: 12px;
+  background: var(--panel, #141a1e);
+  border-top: 1px solid var(--line);
+}
+.chapters__list { display: grid; gap: 2px; margin-top: 8px; }
+.chapter {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 6px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  cursor: pointer;
+}
+.chapter:last-child { border-bottom: 0; }
+.chapter:hover { background: var(--bg-3, #1b2328); }
+.chapter:active { transform: scale(.99); }
+.chapter__n {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.chapter__name { font-size: 14px; line-height: 1.3; }
+.chapter__t {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11.5px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter:active { transform: none; }
+}

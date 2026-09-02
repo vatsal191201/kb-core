@@ -36,8 +36,11 @@
     <span class="topbar__spacer"></span>
     <!-- Complaint #1 lived here: there was no way to see the exercises without
          starting the workout. One entry point, always on screen. -->
+    <button type="button" id="btn-open-sources" class="btn btn--ghost btn--sm">
+      Videos
+    </button>
     <button type="button" id="btn-open-library" class="btn btn--ghost btn--sm">
-      Exercises <span class="btn__count" id="library-count">18</span>
+      Exercises <span class="btn__count" id="library-count">50</span>
     </button>
   </header>
 
@@ -266,6 +269,39 @@
 
 
 <!-- ===================================================== LIBRARY ======= -->
+<!-- Follow the ORIGINAL video. Three ways to train, not one:
+     1. run a generated interval session (view-run)
+     2. build your own from any exercise (view-builder)
+     3. just follow along with a source video, jumping by exercise (here) -->
+<section id="view-sources" class="view view--scroll hidden" aria-label="Source videos">
+
+  <header class="topbar">
+    <button type="button" id="btn-sources-back" class="btn btn--ghost btn--sm">Back</button>
+    <h1 class="topbar__title">Videos</h1>
+  </header>
+
+  <p class="note note--pad">
+    Follow an original workout end to end, or jump straight to any exercise in it.
+    Every clip in this app was cut from one of these.
+  </p>
+
+  <div id="sources-list" class="sources"></div>
+
+  <div id="source-player" class="player hidden" aria-live="polite">
+    <div class="player__frame">
+      <iframe id="source-iframe" title="Source workout video"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    </div>
+    <div class="player__bar">
+      <span id="player-title" class="player__title"></span>
+      <button type="button" id="btn-close-player" class="btn btn--ghost btn--sm">Close</button>
+    </div>
+    <div id="player-chapters" class="chapters" role="group" aria-label="Jump to exercise"></div>
+  </div>
+
+</section>
+
 <section id="view-library" class="view view--scroll hidden" aria-label="Exercise library">
 
   <header class="topbar">
@@ -409,6 +445,7 @@
 
 <script src="app.js"></script>
 <script src="library.js"></script>
+<script src="sources.js"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
