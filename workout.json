@@ -1,0 +1,21 @@
+{
+  "warmup": [
+    {"id":"halo","cue":"Bell tight around the head, elbows in. Ribs down — don't arch.","stop":"Lower back arches"},
+    {"id":"around-world","cue":"Pass the bell around your hips. Stay square, don't sway.","stop":"Hips start swinging"},
+    {"id":"bird-dog","cue":"Opposite arm and leg. Slow. Hips stay level.","stop":"Hips rotate"},
+    {"id":"suitcase-march","cue":"One bell at your side. Stand tall, don't lean away.","stop":"You lean sideways"}
+  ],
+  "rounds": [
+    {"id":"halfkneel-windmill","cue":"Bell locked overhead, eyes on it. Hinge at the hip, not the spine.","stop":"Elbow bends or you round over"},
+    {"id":"overhead-march","cue":"Arm straight up, biceps by your ear. Drive knees to hip height.","stop":"Bell drifts forward"},
+    {"id":"plank-pull-through","cue":"Drag the bell under you. Hips FROZEN — that's the whole exercise.","stop":"Hips rock side to side"},
+    {"id":"woodchop","cue":"Rotate through the ribs, arms just carry the bell.","stop":"You twist from the low back"},
+    {"id":"russian-twist","cue":"Chest tall, rotate under control. Heels can stay down.","stop":"Back rounds"}
+  ],
+  "cooldown": [
+    {"id":"deadbug","cue":"Low back glued to the floor. Slow exhale as you extend.","stop":"Low back lifts off"},
+    {"id":"hollow-rock","cue":"Ribs down, low back pressed flat. Small range is fine.","stop":"Low back arches"},
+    {"id":"sideplank-knee","cue":"Stack the hips. Drive the knee to the elbow.","stop":"Hips sag"}
+  ],
+  "swaps": ["kb-pullover","kb-situp","highplank-tap","leg-raise","sprinter-situp","atlas-swing"]
+}
