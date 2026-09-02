@@ -489,8 +489,21 @@ a { color: var(--lime); text-underline-offset: 3px; }
   color: var(--ink-3);
 }
 .field__out:empty { display: none; }
+/* INTEGRATION: app.js mirrors the input value into these <output> elements,
+   which just duplicates the number already shown in the field. Hide them. */
+.field__out { display: none; }
 
 /* ---- queue (session preview + upcoming list) ---- */
+/* INTEGRATION: library.js injects .queue-item__copy wrapping __name + __block.
+   Stack them so the exercise name and its block label never run together. */
+.queue-item__copy { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.queue-item__block {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
 .queue { display: grid; gap: 2px; }
 
 .queue-item {
@@ -959,16 +972,22 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   transition: color 260ms ease;
 }
 
+/* The demo clip is the second most important thing on screen after the clock.
+   Let it grow into the space the spacer was wasting instead of sitting as a
+   112px thumbnail with ~400px of dead room beneath it. */
 .run__media {
-  flex: none;
-  display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  align-items: start;
-  gap: 14px;
-  padding: 16px var(--pad) 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 12px var(--pad) 0;
+  min-height: 0;
 }
 .run__vidwrap {
-  aspect-ratio: 1;
+  flex: 1 1 auto;
+  min-height: 120px;
+  aspect-ratio: auto;
   border-radius: var(--r-3);
   overflow: hidden;
   background: #0a0c0e;
@@ -1010,7 +1029,7 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   font-weight: 700;
 }
 
-.run__spacer { flex: 1 1 0; min-height: 12px; }
+.run__spacer { flex: 0 0 0; min-height: 0; }
 
 .upnext {
   flex: none;
@@ -1166,7 +1185,7 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
    the demo clip rather than letting the deck fall off the screen. */
 @media (max-height: 660px) {
   .clock { font-size: clamp(72px, 24vw, 120px); }
-  .run__media { grid-template-columns: 84px minmax(0, 1fr); padding-top: 10px; }
+  .run__media { padding-top: 10px; }
   .tbtn { min-height: 58px; }
   .tbtn--sm { min-height: 46px; }
 }

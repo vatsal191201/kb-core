@@ -148,7 +148,9 @@
     setText("#ex-cue", segment.type === "rest" ? (KB.queue[segment.exerciseIndex + 1]?.cue || "") : (ex?.cue || ""));
     setText("#cue", segment.type === "rest" ? (KB.queue[segment.exerciseIndex + 1]?.cue || "") : (ex?.cue || ""));
     const stop = segment.type === "work" ? ex?.stop : "";
-    setText("#ex-stop", stop ? `Stop if: ${stop}` : ""); setText("#stopcue", stop ? `Stop if: ${stop}` : "");
+    // #ex-stop: styles.css prepends the words "Stop if " via ::before, so set the
+    // RAW string here. #stopcue is the legacy v1 node with no such rule.
+    setText("#ex-stop", stop || ""); setText("#stopcue", stop ? `Stop if: ${stop}` : "");
     const side = ex?.mode === "unilateral_split" && segment.type !== "rest" ? "LEFT SIDE" : "";
     setText("#ex-side", side); setText("#side", side);
     const next = segment.type === "rest" ? KB.queue[segment.exerciseIndex + 1] : KB.queue[segment.exerciseIndex + 1];
