@@ -3,137 +3,289 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0b">
+<title>KB Core</title>
+<meta name="description" content="Personal kettlebell core session timer. Editable work and rest intervals, an 18-exercise video library, and full transport controls. Works offline.">
+<meta name="theme-color" content="#0e1113">
+<meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="KB Core">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>KB Core — 30 min</title>
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<style>
-:root{
-  --bg:#0a0a0b; --panel:#141417; --line:#26262b;
-  --ink:#f4f4f5; --dim:#8a8a94;
-  --work:#3ddc84; --rest:#ffb340; --prep:#5b9cff;
-  --safe-b:env(safe-area-inset-bottom,0px);
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
-  overscroll-behavior:none;}
-body{display:flex;flex-direction:column}
-button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
-.hidden{display:none!important}
-
-/* ---------- START SCREEN ---------- */
-#start{flex:1;display:flex;flex-direction:column;padding:24px 20px calc(20px + var(--safe-b));gap:18px;max-width:560px;margin:0 auto;width:100%}
-.brand{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
-h1{font-size:30px;line-height:1.1;margin:2px 0 0;font-weight:750;letter-spacing:-.02em}
-.sub{color:var(--dim);font-size:14.5px;line-height:1.5;margin:0}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
-.lbl{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
-.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.seg button{padding:13px 6px;border-radius:11px;background:#1d1d21;border:1.5px solid transparent;
-  font-weight:650;font-size:15px;transition:.12s}
-.seg button small{display:block;font-weight:450;font-size:11px;color:var(--dim);margin-top:3px}
-.seg button[aria-pressed="true"]{background:#2a2a31;border-color:var(--work);color:#fff}
-.seg button[aria-pressed="true"] small{color:#c9c9d1}
-#go{width:100%;padding:20px;border-radius:16px;background:var(--work);color:#04160c;
-  font-size:19px;font-weight:800;letter-spacing:.01em;margin-top:2px}
-#go:active{transform:scale(.985)}
-.note{font-size:12.5px;color:var(--dim);line-height:1.55}
-.plan{font-size:13.5px;color:#b9b9c2;line-height:1.7;margin:0;padding-left:18px}
-.plan b{color:var(--ink);font-weight:650}
-
-/* ---------- WORKOUT SCREEN ---------- */
-#run{flex:1;display:flex;flex-direction:column;position:relative}
-#tapzone{position:absolute;inset:0;z-index:5}
-#bar{height:5px;background:#1e1e23;flex:none}
-#barfill{height:100%;width:0;background:var(--work);transition:width .25s linear}
-.topline{display:flex;justify-content:space-between;align-items:center;
-  padding:12px 16px 8px;font-size:12.5px;color:var(--dim);letter-spacing:.06em;flex:none}
-#phase{font-weight:750;letter-spacing:.14em;text-transform:uppercase}
-#stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:0 16px;gap:10px;min-height:0}
-#vidwrap{position:relative;width:min(72vw,300px);aspect-ratio:1;border-radius:18px;overflow:hidden;
-  background:#000;border:1px solid var(--line);flex:none}
-#vid{width:100%;height:100%;object-fit:cover;display:block}
-#name{font-size:clamp(22px,6.4vw,32px);font-weight:780;text-align:center;line-height:1.15;
-  letter-spacing:-.02em;margin:0}
-#side{font-size:15px;font-weight:750;color:var(--prep);letter-spacing:.1em;text-transform:uppercase;min-height:19px}
-#clock{font-size:clamp(66px,21vw,110px);font-weight:830;line-height:.9;
-  font-variant-numeric:tabular-nums;letter-spacing:-.045em;margin:2px 0}
-#cue{font-size:14.5px;color:#c2c2cb;text-align:center;line-height:1.5;max-width:34ch;margin:0}
-#stopcue{font-size:12.5px;color:var(--rest);text-align:center;max-width:34ch;margin:0}
-#next{font-size:13px;color:var(--dim);text-align:center;padding:0 16px calc(16px + var(--safe-b));flex:none}
-body.work #barfill{background:var(--work)} body.work #clock{color:var(--work)}
-body.rest #barfill{background:var(--rest)} body.rest #clock{color:var(--rest)}
-body.prep #barfill{background:var(--prep)} body.prep #clock{color:var(--prep)}
-#paused{position:absolute;inset:0;z-index:6;background:rgba(6,6,8,.93);display:flex;
-  flex-direction:column;align-items:center;justify-content:center;gap:20px}
-#paused p{font-size:26px;font-weight:750;margin:0}
-.pbtn{padding:15px 30px;border-radius:13px;background:#1f1f25;border:1px solid var(--line);font-weight:650}
-#wl{font-size:11px;color:var(--dim);text-align:center;padding-bottom:4px}
-
-/* ---------- DONE ---------- */
-#done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px}
-#done h2{font-size:34px;margin:0;font-weight:800}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
-<body class="prep">
+<body>
 
-<section id="start">
-  <div>
-    <div class="brand">Kettlebell</div>
-    <h1>Core — 30 minutes</h1>
-  </div>
-  <p class="sub">60&nbsp;s work · 20&nbsp;s rest. One tap to start, then put the phone down — every transition is called out loud.</p>
+<a class="skip-link" href="#view-home">Skip to content</a>
 
-  <div class="card">
-    <div class="lbl">Today's intensity</div>
-    <div class="seg" id="intensity">
-      <button data-v="easy">Easy<small>2 rounds</small></button>
-      <button data-v="standard" aria-pressed="true">Standard<small>3 rounds</small></button>
-      <button data-v="hard">Hard<small>3 + finisher</small></button>
+<main id="app">
+
+<!-- ======================================================== HOME ======= -->
+<section id="view-home" class="view view--scroll" aria-label="Start a session">
+
+  <header class="topbar">
+    <p class="wordmark">KB<span>CORE</span></p>
+    <span class="topbar__spacer"></span>
+    <!-- Complaint #1 lived here: there was no way to see the exercises without
+         starting the workout. One entry point, always on screen. -->
+    <button type="button" id="btn-open-library" class="btn btn--ghost btn--sm">
+      Exercises <span class="btn__count">18</span>
+    </button>
+  </header>
+
+  <div class="view__body">
+
+    <div class="today">
+      <p class="label">Today</p>
+      <p class="today__total">
+        <span id="total-duration">--:--</span>
+        <span class="today__unit">total</span>
+      </p>
+      <p class="today__shape">
+        Warm-up, <b>five moves</b> per round, cool-down. Every interval and
+        side switch is called out loud, so the phone can sit on the floor.
+      </p>
     </div>
-    <p class="note" style="margin:12px 0 0">Day after a long ride or brick session → pick <b style="color:#c9c9d1">Easy</b>. Never grind to failure.</p>
+
+    <section class="panel" aria-labelledby="h-timing">
+      <h2 class="label" id="h-timing">Timing</h2>
+      <div class="fields">
+
+        <div class="field">
+          <label class="field__label" for="set-work">Work</label>
+          <div class="field__control">
+            <input class="field__input" id="set-work" name="work" type="number"
+                   inputmode="numeric" min="20" max="120" step="5" value="60">
+            <span class="field__unit" aria-hidden="true">sec</span>
+          </div>
+          <output class="field__out" id="set-work-out" for="set-work"></output>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="set-rest">Rest</label>
+          <div class="field__control">
+            <input class="field__input" id="set-rest" name="rest" type="number"
+                   inputmode="numeric" min="10" max="60" step="5" value="20">
+            <span class="field__unit" aria-hidden="true">sec</span>
+          </div>
+          <output class="field__out" id="set-rest-out" for="set-rest"></output>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="set-rounds">Rounds</label>
+          <div class="field__control">
+            <input class="field__input" id="set-rounds" name="rounds" type="number"
+                   inputmode="numeric" min="1" max="8" step="1" value="3">
+            <span class="field__unit" aria-hidden="true">x</span>
+          </div>
+          <output class="field__out" id="set-rounds-out" for="set-rounds"></output>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="set-prep">Prep</label>
+          <div class="field__control">
+            <input class="field__input" id="set-prep" name="prep" type="number"
+                   inputmode="numeric" min="0" max="60" step="5" value="10">
+            <span class="field__unit" aria-hidden="true">sec</span>
+          </div>
+          <output class="field__out" id="set-prep-out" for="set-prep"></output>
+        </div>
+
+      </div>
+      <p class="hint">
+        Work 20 to 120 s, rest 10 to 60 s. Total above recalculates as you
+        type, and the numbers are saved on this phone.
+      </p>
+    </section>
+
+    <section class="panel" aria-labelledby="h-preview">
+      <div class="panel__head">
+        <h2 class="label" id="h-preview">Every interval, in order</h2>
+      </div>
+      <!-- Agent B fills this with .queue-item rows. Skeletons match the final
+           row shape so nothing shifts when the real list lands. -->
+      <div id="session-preview" class="queue">
+        <div class="queue-item queue-item--skeleton" aria-hidden="true">
+          <span class="bone"></span><span class="bone"></span><span class="bone"></span>
+        </div>
+        <div class="queue-item queue-item--skeleton" aria-hidden="true">
+          <span class="bone"></span><span class="bone"></span><span class="bone"></span>
+        </div>
+        <div class="queue-item queue-item--skeleton" aria-hidden="true">
+          <span class="bone"></span><span class="bone"></span><span class="bone"></span>
+        </div>
+        <div class="queue-item queue-item--skeleton" aria-hidden="true">
+          <span class="bone"></span><span class="bone"></span><span class="bone"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-history">
+      <h2 class="label" id="h-history">Recent sessions</h2>
+      <!-- Agent C replaces the empty state with .history-item rows. -->
+      <div id="history-list" class="history">
+        <p class="empty">No sessions logged yet. Finish one and it lands here with the date, length and intensity.</p>
+      </div>
+    </section>
+
   </div>
 
-  <div class="card">
-    <div class="lbl">Session plan</div>
-    <ul class="plan" id="planlist"></ul>
+  <div class="actionbar">
+    <button type="button" id="btn-start" class="btn btn--primary btn--xl">Start session</button>
   </div>
 
-  <button id="go">Start workout</button>
-  <p class="note">Sound on. Unilateral moves auto-switch sides at 30&nbsp;s with a double beep. Tap anywhere during the workout to pause.</p>
 </section>
 
-<section id="run" class="hidden">
-  <div id="bar"><div id="barfill"></div></div>
-  <div class="topline"><span id="phase">Get ready</span><span id="prog"></span></div>
-  <div id="stage">
-    <div id="vidwrap"><video id="vid" muted playsinline loop preload="auto" disablepictureinpicture></video></div>
-    <h2 id="name"></h2>
-    <div id="side"></div>
-    <div id="clock">0:10</div>
-    <p id="cue"></p>
-    <p id="stopcue"></p>
+
+<!-- ===================================================== LIBRARY ======= -->
+<section id="view-library" class="view view--scroll hidden" aria-label="Exercise library">
+
+  <header class="topbar">
+    <button type="button" id="btn-library-back" class="btn btn--ghost btn--sm">Back</button>
+    <h1 class="topbar__title">Exercises</h1>
+  </header>
+
+  <div id="library-filters" class="chiprow" role="group" aria-label="Filter exercises">
+    <button type="button" class="chip" data-filter="all" aria-pressed="true">All</button>
+    <button type="button" class="chip" data-filter="warmup" aria-pressed="false">Warm-up</button>
+    <button type="button" class="chip" data-filter="main" aria-pressed="false">Main</button>
+    <button type="button" class="chip" data-filter="alt" aria-pressed="false">Alternates</button>
+    <span class="chiprow__sep" aria-hidden="true"></span>
+    <button type="button" class="chip" data-filter="Beginner" aria-pressed="false">Beginner</button>
+    <button type="button" class="chip" data-filter="Intermediate" aria-pressed="false">Intermediate</button>
+    <button type="button" class="chip" data-filter="Advanced" aria-pressed="false">Advanced</button>
   </div>
-  <div id="next"></div>
-  <div id="wl"></div>
-  <div id="tapzone"></div>
-  <div id="paused" class="hidden">
-    <p>Paused</p>
-    <button class="pbtn" id="resume">Resume</button>
-    <button class="pbtn" id="quit">End workout</button>
+
+  <div class="view__body">
+    <!-- Agent B fills this with .ex-card articles. -->
+    <div id="library-grid" class="ex-grid">
+      <article class="ex-card ex-card--skeleton" aria-hidden="true">
+        <div class="ex-card__media"></div>
+        <div class="ex-card__body"><span class="bone"></span><span class="bone bone--short"></span></div>
+      </article>
+      <article class="ex-card ex-card--skeleton" aria-hidden="true">
+        <div class="ex-card__media"></div>
+        <div class="ex-card__body"><span class="bone"></span><span class="bone bone--short"></span></div>
+      </article>
+      <article class="ex-card ex-card--skeleton" aria-hidden="true">
+        <div class="ex-card__media"></div>
+        <div class="ex-card__body"><span class="bone"></span><span class="bone bone--short"></span></div>
+      </article>
+      <article class="ex-card ex-card--skeleton" aria-hidden="true">
+        <div class="ex-card__media"></div>
+        <div class="ex-card__body"><span class="bone"></span><span class="bone bone--short"></span></div>
+      </article>
+    </div>
+  </div>
+
+  <!-- Detail panel. Agent B owns the innerHTML and toggles the `hidden` class.
+       Styled hooks are listed at the top of styles.css. -->
+  <aside id="library-detail" class="sheet hidden" aria-label="Exercise detail"></aside>
+
+</section>
+
+
+<!-- ========================================================= RUN ======= -->
+<section id="view-run" class="view view--run hidden" aria-label="Workout in progress">
+
+  <div class="progress-track">
+    <div id="progress-bar" class="progress-fill" role="progressbar"
+         aria-label="Session progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+  </div>
+
+  <header class="run__top">
+    <p id="prog-text" class="run__prog">1 / 22</p>
+    <button type="button" id="btn-end" class="btn btn--ghost btn--sm run__end">End</button>
+  </header>
+
+  <div class="run__phase">
+    <!-- Phase is stated in WORDS as well as colour. Colour alone never carries
+         the work / rest distinction. -->
+    <h2 id="phase" class="phase" aria-live="polite">Get ready</h2>
+    <p id="ex-side" class="side" aria-live="polite"></p>
+  </div>
+
+  <p id="clock" class="clock" role="timer" aria-live="off">0:10</p>
+
+  <div class="run__media">
+    <div class="run__vidwrap">
+      <video id="vid" class="run__vid"
+             autoplay loop muted playsinline preload="auto"
+             poster="media/halo.jpg" disablepictureinpicture
+             aria-label="Looping demonstration of the current exercise"></video>
+    </div>
+    <div class="run__meta">
+      <h3 id="ex-name" class="ex-name">Kettlebell Halo</h3>
+      <p id="ex-cue" class="ex-cue"></p>
+    </div>
+  </div>
+
+  <!-- CSS prepends the words "Stop if". Set textContent to the raw stop string. -->
+  <p id="ex-stop" class="ex-stop"></p>
+
+  <div class="run__spacer"></div>
+
+  <div class="upnext">
+    <p class="upnext__line">
+      <span class="label">Up next</span>
+      <span id="up-next"></span>
+    </p>
+    <!-- Native disclosure element, so the full remaining list needs no JS. -->
+    <details class="upnext__all">
+      <summary class="upnext__summary">All remaining</summary>
+      <div id="upcoming-list" class="queue queue--compact"></div>
+    </details>
+  </div>
+
+  <p id="wl" class="run__status"></p>
+
+  <!-- The transport deck. v1 hid pause behind an invisible tap zone; here every
+       control is a labelled key at 68px (main) and 52px (nudge). End is kept in
+       the top corner, away from the thumbs. -->
+  <div class="deck">
+    <div class="deck__row deck__row--main">
+      <button type="button" id="btn-prev"  class="tbtn">Back</button>
+      <button type="button" id="btn-pause" class="tbtn tbtn--primary">Pause</button>
+      <button type="button" id="btn-skip"  class="tbtn">Skip</button>
+    </div>
+    <div class="deck__row deck__row--nudge">
+      <button type="button" id="btn-minus10" class="tbtn tbtn--sm">-10s</button>
+      <button type="button" id="btn-plus30"  class="tbtn tbtn--sm">+30s</button>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ======================================================== DONE ======= -->
+<section id="view-done" class="view hidden" aria-label="Session complete">
+  <header class="topbar">
+    <p class="wordmark">KB<span>CORE</span></p>
+  </header>
+
+  <div class="done">
+    <p class="done__mark">DONE</p>
+    <p id="done-summary" class="done__summary">Session complete.</p>
+    <p class="hint done__note">Saved to this phone. Walk it off, get some water.</p>
+  </div>
+
+  <div class="actionbar">
+    <button type="button" id="btn-home" class="btn btn--primary btn--xl">Back to start</button>
   </div>
 </section>
 
-<section id="done" class="hidden">
-  <h2>Done ✅</h2>
-  <p class="sub" id="donesub"></p>
-  <button class="pbtn" id="again">Back to start</button>
-</section>
+</main>
 
 <script src="app.js"></script>
+<script src="library.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () { /* offline cache is optional */ });
+    });
+  }
+</script>
 </body>
 </html>

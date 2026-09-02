@@ -1,12 +1,14 @@
 {
-  "name": "KB Core \u2014 30 min",
+  "name": "KB Core",
   "short_name": "KB Core",
+  "description": "Personal kettlebell core session timer with an 18-exercise video library. Works offline.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
-  "background_color": "#0a0a0b",
-  "theme_color": "#0a0a0b",
+  "background_color": "#0e1113",
+  "theme_color": "#0e1113",
   "orientation": "portrait",
+  "categories": ["health", "fitness"],
   "icons": [
     {
       "src": "icon-192.png",
