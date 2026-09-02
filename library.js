@@ -36,7 +36,17 @@
     video.muted = true;
     video.defaultMuted = true;
     video.playsInline = true;
-    video.preload = "metadata";
+    // preload="metadata" only fetches the header, so readyState tops out at 1
+    // and play() resolves without ever rendering frames: 18 cards sat "ready"
+    // but frozen on their posters. "auto" lets the observer actually start
+    // playback; clips are ~100-300KB and only visible ones ever play.
+    video.preload = "auto";
+    // Attributes (not just properties) - iOS Safari checks the ATTRIBUTES when
+    // deciding whether inline autoplay is permitted.
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("loop", "");
     video.poster = exercise.poster || "";
     video.src = exercise.video || "";
     video.setAttribute("aria-label", `${exercise.name || "Exercise"} demonstration`);
