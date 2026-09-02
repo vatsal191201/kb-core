@@ -43,7 +43,10 @@
     if (t) t.textContent = label ? (src.channel + " - " + label) : src.title;
     box.classList.remove("hidden");
     renderChapters(src);
-    box.scrollIntoView({ behavior: "smooth", block: "start" });
+    // The player is a fixed overlay now, so it is on screen by definition.
+    // Lock the page behind it and reset the overlay's own scroll to the top.
+    document.body.classList.add("no-scroll");
+    box.scrollTop = 0;
   }
 
   function closePlayer() {
@@ -51,6 +54,7 @@
     var box = byId("source-player");
     if (frame) frame.src = "";          // stop playback, do not leave it running
     if (box) box.classList.add("hidden");
+    document.body.classList.remove("no-scroll");
     current = null;
   }
 
@@ -128,6 +132,9 @@
     });
     var close = byId("btn-close-player");
     if (close) close.addEventListener("click", closePlayer);
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closePlayer();
+    });
 
     fetch("sources.json")
       .then(function (r) { return r.json(); })

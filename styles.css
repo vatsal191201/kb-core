@@ -311,9 +311,12 @@ a { color: var(--lime); text-underline-offset: 3px; }
 
 /* motivation: a view swap is a state change, the 6px rise tells you the screen
    replaced itself rather than repainted in place. 200ms, once, never loops. */
+/* Opacity only. A `transform` on the view makes it the containing block for
+   every position:fixed descendant, so the video player sheet and the run deck
+   would anchor to the view instead of the viewport. Not worth 6px of rise. */
 @keyframes view-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* `height` and not just `min-height`, deliberately. `overflow-y: auto` creates
@@ -323,23 +326,36 @@ a { color: var(--lime); text-underline-offset: 3px; }
    row, start bar, transport deck) would silently pin to the bottom of the
    element instead of the viewport. A definite height makes the view the real
    scroll container. */
+/* FIX (reported on device): "if I go into Exercises or Videos and come back,
+   the spacing on the home page breaks".
+
+   Each view used to be its OWN scroll container sized `height: 100dvh`.
+   On a phone the URL bar shows/hides, so 100dvh re-resolves to a different
+   pixel height; coming back re-ran the view animation and the whole column
+   re-laid-out against the new height. Nested scrollers also break iOS
+   momentum scrolling and swallow taps.
+
+   Let the DOCUMENT scroll instead. position:sticky still works (it resolves
+   against the document scrollport) and the layout no longer depends on a
+   viewport unit that changes while you scroll. */
 .view--scroll {
-  height: 100dvh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  min-height: 100dvh;
 }
 .view__body { padding: 0 var(--pad) 28px; display: grid; gap: 18px; }
 
 /* ---------------------------------------------------------------- topbar -- */
+/* FIX (reported on device): "the top nav bar is squished".
+   Wordmark + two labelled buttons + a count did not breathe at 390px.
+   Tighter gap, tighter side padding, and the buttons may not shrink. */
 .topbar {
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-height: 56px;
-  padding: calc(10px + var(--safe-t)) var(--pad) 10px;
+  padding: calc(10px + var(--safe-t)) 12px 10px;
   /* solid, not a fade: the library filter row sticks directly beneath it and
      a translucent bar would let scrolling cards smear through both. */
   background: var(--bg);
@@ -1229,9 +1245,17 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
 /* Same definite-height rule as .view--scroll, and it matters most here: the
    deck must stay pinned to the bottom of the SCREEN even when the "all
    remaining" list is open, and the clock must never scroll out of sight. */
+/* The run view is the ONE screen that legitimately wants to fill the viewport:
+   the deck must stay reachable and the clock must never scroll away.
+   `100dvh` alone squished it on device, because dvh shrinks as the URL bar
+   shows and every child was fighting for the remainder. Use dynamic viewport
+   height as a MINIMUM and let it grow if the content genuinely needs more,
+   so nothing gets crushed or clipped. */
 .view--run {
-  height: 100dvh;
-  overflow-y: auto;
+  min-height: 100dvh;
+  height: auto;
+  display: flex;
+  flex-direction: column;
   overscroll-behavior: contain;
   padding-bottom: 0;
   background: var(--bg);
@@ -1463,6 +1487,9 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
 .queue--compact .queue-item { min-height: 40px; font-size: 14.5px; }
 
 /* ---- transport deck: the thing v1 got wrong ---- */
+/* Reported: "everything is squished". The deck is the last thing that may be
+   compressed, so it is pinned to the viewport bottom and the run column simply
+   reserves room for it (see .view--run padding-bottom below). */
 .deck {
   flex: none;
   position: sticky;
@@ -1644,13 +1671,32 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
 .source__actions .btn { min-height: 44px; }   /* thumb target */
 
 /* --- player --- */
+/* FIX (reported on device): "the follow-along features in the videos tab do not
+   work and when I click on the exercises under the videos tab, nothing works".
+
+   The player was an inline block at the BOTTOM of a long list, so opening it
+   from the first card put it ~1570px down the page. Nothing appeared to happen.
+   scrollIntoView could not save it either once the view stopped being its own
+   scroll container.
+
+   It is now a fixed overlay: opening it is always visible, wherever you tapped. */
 .player {
-  margin: 4px var(--pad) 24px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-3);
-  overflow: hidden;
-  background: #000;
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 90);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgb(6 8 10 / .97);
+  border: 0;
+  border-radius: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: var(--safe-t);
+  padding-bottom: var(--safe-b);
 }
+.player.hidden { display: none; }
+.player__frame { flex: 0 0 auto; }
 .player__frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
 .player__frame iframe {
   position: absolute; inset: 0;
@@ -1658,10 +1704,13 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
 }
 .player__bar {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; padding: 10px 12px;
+  gap: 10px; padding: 12px;
   background: var(--panel, #141a1e);
   border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0;
 }
+.player__bar .btn { flex: 0 0 auto; min-height: 44px; }
 .player__title {
   font-size: 13px; color: var(--ink-2, #b9c2c7);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -1669,9 +1718,9 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
 
 /* --- chapter jump list --- */
 .chapters {
-  padding: 12px;
-  background: var(--panel, #141a1e);
-  border-top: 1px solid var(--line);
+  flex: 1 1 auto;
+  padding: 12px 12px calc(24px + var(--safe-b));
+  background: var(--bg);
 }
 .chapters__list { display: grid; gap: 2px; margin-top: 8px; }
 .chapter {
@@ -1708,4 +1757,51 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
 
 @media (prefers-reduced-motion: reduce) {
   .chapter:active { transform: none; }
+}
+
+
+/* ---- topbar fit at 390px (reported squished on device) ---- */
+.topbar .btn { flex: 0 0 auto; white-space: nowrap; }
+.topbar__spacer { flex: 1 1 auto; min-width: 0; }
+@media (max-width: 430px) {
+  .wordmark { font-size: 11.5px; letter-spacing: .16em; }
+  .topbar { gap: 6px; padding-left: 10px; padding-right: 10px; }
+  .topbar .btn--sm { padding: 8px 10px; font-size: 12.5px; }
+  .btn__count { margin-left: 6px; padding-left: 6px; }
+}
+@media (max-width: 360px) {
+  .wordmark { font-size: 10.5px; letter-spacing: .1em; }
+  .topbar .btn--sm { padding: 8px; font-size: 12px; }
+}
+
+/* page behind a fullscreen overlay must not scroll */
+body.no-scroll { overflow: hidden; }
+
+/* ---- run view fit (reported squished + video cut off on device) ---- */
+/* Give the media a real, uncrushable share of the screen and stop the flex
+   column from shrinking children below their content size. */
+.view--run > * { flex-shrink: 0; }
+/* `contain` so the demo is never cropped (reported: "the videos are also cut
+   off"), and the wrapper takes the clip's own aspect ratio so `contain` does
+   not leave a black band under it. */
+.run__media { flex: 0 1 auto; min-height: 0; }
+.run__vidwrap {
+  min-height: 0;
+  max-height: 42dvh;
+  aspect-ratio: auto;
+  display: flex;
+  background: transparent;
+  border: 0;
+}
+.run__vid {
+  object-fit: contain;
+  width: 100%;
+  height: auto;
+  max-height: 42dvh;
+  background: transparent;
+  border-radius: var(--r-3);
+}
+
+@media (max-height: 750px) {
+  .run__vidwrap, .run__vid { max-height: 32dvh; }
 }

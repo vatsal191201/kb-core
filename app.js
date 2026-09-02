@@ -359,8 +359,41 @@
     }
     notifyTick();
   }
+  /* THE CLOCK MUST NOT DEPEND ON requestAnimationFrame ALONE.
+   *
+   * Reported on device: "when I start a workout, the skip, resume and pause
+   * don't actually work" - the clock sat frozen. rAF is a *rendering* callback:
+   * the browser stops delivering it whenever the page is not compositing (tab
+   * hidden, screen dimmed, low power mode, another app in front). A workout
+   * timer that stops counting when the screen dims is broken by design.
+   * Confirmed here: a probe counting rAF callbacks returned ZERO frames.
+   *
+   * So: a setInterval heartbeat drives the clock, and every value is still
+   * computed from the single performance.now() origin, so it stays
+   * drift-corrected and cannot accumulate error. rAF is kept only for the
+   * smooth progress bar, as a bonus when it happens to run.
+   */
+  function startTicking() {
+    stopTicking();
+    timer.tick = setInterval(() => renderFrame(performance.now()), 200);
+    timer.raf = requestAnimationFrame(renderFrame);
+    renderFrame(performance.now());          // paint immediately, no 200ms lag
+  }
+  function stopTicking() {
+    clearInterval(timer.tick);
+    cancelAnimationFrame(timer.raf);
+  }
+
   function renderFrame(now) {
-    if (timer.paused) return;
+    // Reported on device: "the skip, resume and pause don't actually work."
+    //
+    // This early return used to be a bare `return`, which killed the rAF loop.
+    // setPaused(false) schedules exactly ONE frame; if that frame ran while
+    // timer.paused was still true (or a skip re-entered moveTo in the same
+    // tick), nothing rescheduled and the clock stayed frozen forever with the
+    // button reading "Pause". Keep the loop ALIVE while paused instead: cheap,
+    // and it means resume can never lose the heartbeat.
+    if (timer.paused) return;              // the interval keeps running; nothing to draw
     const segment = timer.segments[timer.index];
     if (!segment) return finish(true);
     const elapsed = (now - timer.t0) / 1000;
@@ -379,6 +412,8 @@
     const bar = $("#progress-bar") || $("#barfill"); if (bar) bar.style.width = `${pct}%`;
     const text = `${Math.min(KB.currentIndex + 1, KB.queue.length)} / ${KB.queue.length}${currentExercise()?.round ? ` · Round ${currentExercise().round}/${KB.settings.rounds}` : ""}`;
     setText("#prog-text", text); setText("#prog", text);
+    // Smoothness only. Correctness comes from the interval above.
+    cancelAnimationFrame(timer.raf);
     timer.raf = requestAnimationFrame(renderFrame);
   }
   function moveTo(target, now = performance.now()) {
@@ -399,11 +434,15 @@
     const pause = $("#btn-pause"); if (pause) pause.textContent = value ? "Resume" : "Pause";
     const oldPause = $("#paused"); if (oldPause) oldPause.classList.toggle("hidden", !value);
     if (value) {
-      timer.pauseAt = performance.now(); cancelAnimationFrame(timer.raf); $("#vid")?.pause();
+      // Do NOT cancel the rAF here; renderFrame keeps itself alive while paused
+      // so resume cannot lose the heartbeat.
+      timer.pauseAt = performance.now(); $("#vid")?.pause();
       try { speechSynthesis.cancel(); } catch (_) {}
     } else {
       timer.t0 += performance.now() - timer.pauseAt; // preserve elapsed time exactly
-      $("#vid")?.play().catch(() => {}); lockScreen(); timer.raf = requestAnimationFrame(renderFrame);
+      $("#vid")?.play().catch(() => {});
+      lockScreen();
+      startTicking();
     }
   }
   function nudge(seconds) {
@@ -419,7 +458,7 @@
   }
   function finish(completed) {
     if (!timer.running) return;
-    cancelAnimationFrame(timer.raf); timer.running = false; timer.paused = false; releaseLock();
+    stopTicking(); timer.running = false; timer.paused = false; releaseLock();
     if (completed) {
       sounds.done(); say("Workout complete");
       // t0 has already been shifted for pauses, skips, and nudges, so this is
@@ -441,7 +480,7 @@
     timer.segments = makeSegments(); timer.index = 0; timer.t0 = performance.now(); timer.startedAt = timer.t0;
     timer.running = true; timer.paused = false;
     if ($("#view-run")) showView("view-run"); else { $("#start")?.classList.add("hidden"); $("#run")?.classList.remove("hidden"); }
-    renderSegment(false); timer.raf = requestAnimationFrame(renderFrame);
+    renderSegment(false); startTicking();
   }
   function renderHistory() {
     const list = $("#history-list"); if (!list) return;

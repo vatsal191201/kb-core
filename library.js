@@ -28,6 +28,9 @@
     return node;
   }
 
+  // iOS Safari stops decoding past a handful of simultaneous videos.
+  const MAX_LIVE_VIDEOS = 6;
+
   function makeVideo(exercise, className) {
     const video = document.createElement("video");
     if (className) video.className = className;
@@ -40,7 +43,18 @@
     // and play() resolves without ever rendering frames: 18 cards sat "ready"
     // but frozen on their posters. "auto" lets the observer actually start
     // playback; clips are ~100-300KB and only visible ones ever play.
-    video.preload = "auto";
+    // LAZY. Do NOT set .src here.
+    //
+    // Reported on device: "the videos don't play back properly and the exercise
+    // tab does not render properly on my phone". With 46 cards, assigning src +
+    // preload="auto" to every one told the browser to fetch 46 videos at once.
+    // Mobile Safari caps how many media elements can decode concurrently; past
+    // that limit play() rejects silently and cards sit frozen on their posters.
+    // Desktop has a much higher cap, which is why this never reproduced here.
+    //
+    // The src is attached by the IntersectionObserver when the card scrolls
+    // into view, and detached when it leaves, so only a handful are ever live.
+    video.preload = "none";
     // Attributes (not just properties) - iOS Safari checks the ATTRIBUTES when
     // deciding whether inline autoplay is permitted.
     video.setAttribute("muted", "");
@@ -48,13 +62,29 @@
     video.setAttribute("webkit-playsinline", "");
     video.setAttribute("loop", "");
     video.poster = exercise.poster || "";
-    video.src = exercise.video || "";
+    video.dataset.src = exercise.video || "";
     video.addEventListener("error", () => {
       // A missing future clip must leave its poster/card usable.
       try { video.removeAttribute("src"); video.load(); } catch (_) {}
     }, { once: true });
     video.setAttribute("aria-label", `${exercise.name || "Exercise"} demonstration`);
     return video;
+  }
+
+  // Attach/detach the real src so only on-screen clips hold a decoder.
+  function attachSrc(video) {
+    const want = video.dataset.src;
+    if (!want || video.src.endsWith(want)) return;
+    video.src = want;
+    video.load();
+  }
+  function detachSrc(video) {
+    if (!video.src) return;
+    try {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();          // actually frees the decoder on iOS
+    } catch (_) {}
   }
 
   function ensureObserver() {
@@ -64,19 +94,63 @@
         const video = entry.target;
         const card = video.closest(".ex-card");
         if (entry.isIntersecting && entry.intersectionRatio > 0 && !(card && card.hidden)) {
+          attachSrc(video);
           video.play().catch(() => {});
         } else {
-          video.pause();
+          detachSrc(video);
         }
       });
-    }, { threshold: 0.15 });
+      // Hard ceiling regardless of what the observer thinks is visible.
+      const live = Array.from(document.querySelectorAll("#library-grid video"))
+        .filter(v => v.src);
+      if (live.length > MAX_LIVE_VIDEOS) {
+        live.slice(0, live.length - MAX_LIVE_VIDEOS).forEach(v => {
+          const r = v.getBoundingClientRect();
+          if (r.bottom < 0 || r.top > window.innerHeight) detachSrc(v);
+        });
+      }
+    }, { threshold: 0.15, rootMargin: "200px 0px" });
   }
 
   function observeVideo(video) {
     video.pause();
     if (videoObserver) videoObserver.observe(video);
-    else if (!("IntersectionObserver" in window)) video.play().catch(() => {});
+    else if (!("IntersectionObserver" in window)) { attachSrc(video); video.play().catch(() => {}); }
   }
+
+  /* Belt and braces. IntersectionObserver is the efficient path, but it is not
+     guaranteed to deliver a callback (it did not fire at all in one headless
+     environment, and a missed callback means a grid of frozen posters, which is
+     exactly what was reported on device). This sweep runs on scroll/resize and
+     once after render: it attaches the clips that are actually on screen and
+     detaches the rest, so the grid is correct even if the observer never fires.
+     Idempotent - attachSrc/detachSrc both no-op when already in the right state. */
+  function sweepVisible() {
+    const vids = Array.from(document.querySelectorAll("#library-grid video"));
+    let live = 0;
+    vids.forEach(v => {
+      const card = v.closest(".ex-card");
+      const r = v.getBoundingClientRect();
+      const onScreen = !(card && card.hidden) &&
+                       r.bottom > -200 && r.top < window.innerHeight + 200 &&
+                       r.width > 0;
+      if (onScreen && live < MAX_LIVE_VIDEOS) {
+        live++;
+        attachSrc(v);
+        if (v.paused) v.play().catch(() => {});
+      } else {
+        detachSrc(v);
+      }
+    });
+  }
+  let sweepPending = false;
+  function scheduleSweep() {
+    if (sweepPending) return;
+    sweepPending = true;
+    setTimeout(() => { sweepPending = false; sweepVisible(); }, 120);
+  }
+  window.addEventListener("scroll", scheduleSweep, { passive: true });
+  window.addEventListener("resize", scheduleSweep, { passive: true });
 
   function ensureFilters() {
     const filters = byId("library-filters");
@@ -114,9 +188,19 @@
       const show = matchesFilter(exercises[index] || {});
       card.hidden = !show;
       const video = card.querySelector("video");
-      if (video && !show) video.pause();
-      if (video && show && !videoObserver) video.play().catch(() => {});
+      if (video && !show) { video.pause(); detachSrc(video); }
+      if (video && show && !videoObserver) { attachSrc(video); video.play().catch(() => {}); }
+      // Re-observe visible cards. The IntersectionObserver only re-evaluates on
+      // intersection CHANGES, and `hidden` is applied AFTER observe() during the
+      // initial render, so every card looked hidden at first callback and no src
+      // was ever attached: 46 posters, zero playing. Re-observing forces a fresh
+      // callback against the card's true visibility.
+      if (video && show && videoObserver) {
+        videoObserver.unobserve(video);
+        videoObserver.observe(video);
+      }
     });
+    scheduleSweep();
   }
 
   function openDetail(exercise) {
@@ -133,6 +217,10 @@
     });
 
     const video = makeVideo(exercise, "library-detail__video");
+    // The detail sheet is not watched by the IntersectionObserver, so nothing
+    // would ever attach its src now that makeVideo() is lazy. Attach it here.
+    attachSrc(video);
+    video.play().catch(() => {});
     detail.appendChild(video);
     addText(detail, "h2", "library-detail__name", exercise.name);
 
@@ -196,6 +284,7 @@
       observeVideo(video);
     });
     applyFilter();
+    scheduleSweep();
   }
 
   function durationFor(item) {
