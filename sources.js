@@ -85,7 +85,11 @@
     if (!host || !sources) return;
     host.replaceChildren();
 
-    sources.forEach(function (src) {
+    sources.filter(function (src) {
+      var kb = window.KB;
+      if (kb && typeof kb.matchesEquipment === "function") return kb.matchesEquipment(src);
+      return true;
+    }).forEach(function (src) {
       var card = el("article", "source");
 
       var head = el("div", "source__head");
@@ -132,6 +136,12 @@
     });
     var close = byId("btn-close-player");
     if (close) close.addEventListener("click", closePlayer);
+    // Equipment lives in app.js. Both this module and library.js need to react,
+    // so listen on a DOM event rather than compete for a single KB callback slot.
+    document.addEventListener("kb:equipmentchange", function () {
+      closePlayer();
+      render();
+    });
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closePlayer();
     });

@@ -170,7 +170,20 @@
     });
   }
 
+  function matchesEquipment(exercise) {
+    const kb = window.KB;
+    if (kb && typeof kb.matchesEquipment === "function") return kb.matchesEquipment(exercise);
+    return true;
+  }
+
+  function updateLibraryCount() {
+    const node = byId("library-count");
+    if (!node) return;
+    node.textContent = String(exercises.filter(e => e && e.id && matchesEquipment(e)).length);
+  }
+
   function matchesFilter(exercise) {
+    if (!matchesEquipment(exercise)) return false;
     return activeFilter === "all" ||
       exercise.block === activeFilter || exercise.level === activeFilter;
   }
@@ -384,6 +397,12 @@
     kb.onTick = function () {
       renderUpcoming(false);
     };
+    kb.onEquipmentChange = function () {
+      const detail = byId("library-detail");
+      if (detail) detail.hidden = true;
+      applyFilter();
+      updateLibraryCount();
+    };
     renderPreview();
     renderUpcoming(true);
   }
@@ -395,6 +414,7 @@
       if (!Array.isArray(data)) return;
       exercises = data;
       renderLibrary();
+      updateLibraryCount();
     } catch (error) {
       const grid = byId("library-grid");
       if (grid && !grid.children.length) addText(grid, "p", "queue-empty", "Exercise library unavailable.");

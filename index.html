@@ -58,6 +58,30 @@
       </p>
     </div>
 
+    <!-- Equipment gate. Sits ABOVE intensity because it decides which pool of
+         exercises even exists; intensity only trims that pool afterwards. -->
+    <div class="block" role="group" aria-labelledby="h-equipment">
+      <h2 class="label" id="h-equipment">Equipment</h2>
+      <div id="equipment" class="seg">
+        <button type="button" class="seg__opt" data-equipment="kettlebell" aria-pressed="true">
+          <span class="seg__name">Kettlebell</span>
+          <span class="seg__note" data-equipment-count="kettlebell">--</span>
+        </button>
+        <button type="button" class="seg__opt" data-equipment="bodyweight" aria-pressed="false">
+          <span class="seg__name">No equipment</span>
+          <span class="seg__note" data-equipment-count="bodyweight">--</span>
+        </button>
+        <button type="button" class="seg__opt" data-equipment="both" aria-pressed="false">
+          <span class="seg__name">Both</span>
+          <span class="seg__note" data-equipment-count="both">--</span>
+        </button>
+      </div>
+      <p class="hint">
+        No equipment gives you a floor-only session — nothing to carry, works in
+        a hotel room. Both mixes the pools.
+      </p>
+    </div>
+
     <!-- Complaint #2: v2 dropped the intensity selector entirely. It comes
          back directly under the total, above the fine-tuning knobs, because it
          is the one decision that changes what the session actually is. -->

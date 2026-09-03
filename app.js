@@ -25,6 +25,7 @@
   const saved = storedSettings();
   KB.settings = Object.fromEntries(Object.keys(defaults).map(k => [k, clamp(k, saved[k])]));
   KB.intensity = ["easy", "standard", "hard"].includes(saved.intensity) ? saved.intensity : "standard";
+  KB.equipment = ["kettlebell", "bodyweight", "both"].includes(saved.equipment) ? saved.equipment : "kettlebell";
   KB.focus = Array.isArray(saved.focus) ? saved.focus.filter(value => typeof value === "string") : [];
   KB.queue = [];
   KB.currentIndex = 0;
@@ -68,7 +69,7 @@
   function updateTotal() { setText("#total-duration", fmt(totalSeconds())); }
   function updateBuilderTotal() { setText("#builder-total", fmt(totalSeconds())); }
   function saveSettings() {
-    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...KB.settings, intensity: KB.intensity, focus: KB.focus })); } catch (_) {}
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...KB.settings, intensity: KB.intensity, equipment: KB.equipment, focus: KB.focus })); } catch (_) {}
   }
   function syncSettings() {
     Object.keys(defaults).forEach(name => {
@@ -96,8 +97,16 @@
   function matchesFocus(exercise) {
     return !KB.focus.length || (Array.isArray(exercise.focus) && exercise.focus.some(value => KB.focus.includes(value)));
   }
+  function equipmentOf(exercise) {
+    return (exercise && exercise.equipment) || "kettlebell";
+  }
+  KB.matchesEquipment = function (exercise) {
+    return KB.equipment === "both" || equipmentOf(exercise) === KB.equipment;
+  };
   function eligibleExercises(exercises) {
-    return (Array.isArray(exercises) ? exercises : []).filter(exercise => exercise && exercise.id && (KB.intensity !== "easy" || intensityOf(exercise) !== 3));
+    return (Array.isArray(exercises) ? exercises : []).filter(exercise => exercise && exercise.id
+      && KB.matchesEquipment(exercise)
+      && (KB.intensity !== "easy" || intensityOf(exercise) !== 3));
   }
   function makeQueueExercise(exercise, block, round, finisher) {
     return { id: exercise.id, name: exercise.name || exercise.id, mode: exercise.mode || "bilateral",
@@ -159,6 +168,20 @@
   }
 
   function titleCase(value) { return String(value || "").replace(/[-_]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()); }
+  function renderEquipment(exercises) {
+    const list = Array.isArray(exercises) ? exercises : [];
+    const counts = { kettlebell: 0, bodyweight: 0, both: list.filter(e => e && e.id).length };
+    list.forEach(e => { if (e && e.id) counts[equipmentOf(e)] = (counts[equipmentOf(e)] || 0) + 1; });
+    document.querySelectorAll("#equipment button[data-equipment]").forEach(button => {
+      button.setAttribute("aria-pressed", String(button.dataset.equipment === KB.equipment));
+    });
+    document.querySelectorAll("[data-equipment-count]").forEach(node => {
+      const key = node.dataset.equipmentCount;
+      node.textContent = `${counts[key] || 0} moves`;
+    });
+    setText("#run-equipment", KB.equipment === "bodyweight" ? "No equipment" : titleCase(KB.equipment));
+  }
+  KB.renderEquipment = renderEquipment;
   function renderIntensity() {
     document.querySelectorAll("#intensity button[data-intensity]").forEach(button => {
       const selected = button.dataset.intensity === KB.intensity;
@@ -505,6 +528,23 @@
         });
       }
     });
+    document.querySelectorAll("#equipment button[data-equipment]").forEach(button => {
+      if (button.dataset.equipment && !button.dataset.equipmentWired) {
+        button.dataset.equipmentWired = "true";
+        button.addEventListener("click", () => {
+          const equipment = button.dataset.equipment;
+          if (!["kettlebell", "bodyweight", "both"].includes(equipment)) return;
+          if (equipment === KB.equipment) return;
+          KB.equipment = equipment; saveSettings();
+          KB.loadExercises().then(exercises => {
+            renderEquipment(exercises); renderFocus(exercises);
+            rebuildQueue({ force: true });
+            if (typeof KB.onEquipmentChange === "function") KB.onEquipmentChange(KB.equipment);
+            document.dispatchEvent(new CustomEvent("kb:equipmentchange", { detail: KB.equipment }));
+          }).catch(() => {});
+        });
+      }
+    });
     const focusChips = $("#focus-chips");
     if (focusChips && !focusChips.dataset.focusWired) {
       focusChips.dataset.focusWired = "true";
@@ -516,7 +556,7 @@
       });
     }
     syncSettings(); renderIntensity(); wireBuilder();
-    KB.loadExercises().then(exercises => renderFocus(exercises)).catch(() => {});
+    KB.loadExercises().then(exercises => { renderEquipment(exercises); renderFocus(exercises); }).catch(() => {});
     rebuildQueue(); renderHistory();
     wire("#btn-start", start); wire("#go", start);
     wire("#btn-pause", () => setPaused(!timer.paused)); wire("#resume", () => setPaused(false));
