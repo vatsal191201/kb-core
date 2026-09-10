@@ -85,7 +85,7 @@
      .sheet__head .sheet__close .sheet__media .sheet__title .sheet__sub
      .sheet__cue .sheet__stop .sheet__rows .sheet__row .sheet__label
      .sheet__value .sheet__source
-   Toggle the sheet by adding / removing the `hidden` class on #library-detail.
+   Toggle the sheet using the hidden attribute on #library-detail.
    Put a real close button in .sheet__close - it is already sized to 44px.
 
    #library-filters buttons: I set aria-pressed="true" on the "all" chip.
@@ -1009,7 +1009,11 @@ a { color: var(--lime); text-underline-offset: 3px; }
   gap: 8px;
   padding: 4px var(--pad) 14px;
   background: var(--bg);
-  overflow-x: auto;
+  /* Every filter stays visible at phone width. The old horizontal strip let
+     focusable chips sit beyond the viewport, which also made target browsing
+     feel like a hidden second control. */
+  flex-wrap: wrap;
+  overflow-x: clip;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
@@ -1082,7 +1086,7 @@ a { color: var(--lime); text-underline-offset: 3px; }
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 .ex-card__tag {
   position: absolute;
@@ -1113,6 +1117,38 @@ a { color: var(--lime); text-underline-offset: 3px; }
   letter-spacing: .02em;
   color: var(--ink-3);
 }
+
+/* Target tags are data-led rather than a prose muscles string: repeated visual
+   treatment makes a loaded session readable at a glance. */
+.focus-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+.focus-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  max-width: 100%;
+  padding: 3px 6px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--bg-3);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: .035em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.focus-tag--anti-extension, .focus-tag--anti-rotation, .focus-tag--anti-lateral-flexion { border-color: rgb(96 210 245 / .48); color: var(--cyan); }
+.focus-tag--obliques, .focus-tag--upper-abs, .focus-tag--lower-abs { border-color: rgb(201 242 74 / .4); color: var(--lime); }
+.focus-tag--shoulders { border-color: rgb(182 151 255 / .5); color: #c7b0ff; }
+.focus-tag--legs, .focus-tag--power { border-color: rgb(255 171 61 / .5); color: var(--amber); }
+.focus-tag--carry, .focus-tag--conditioning { border-color: rgb(255 132 157 / .48); color: #ff9ab0; }
+.ex-card .focus-tags { margin-top: 3px; }
 
 /* ---- detail sheet (slide-over, not a modal) ---- */
 .sheet {
@@ -1168,7 +1204,7 @@ a { color: var(--lime); text-underline-offset: 3px; }
   margin-bottom: 16px;
 }
 .sheet__media > video,
-.sheet__media > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sheet__media > img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 .sheet__title {
   font-size: 24px;
@@ -1192,6 +1228,19 @@ a { color: var(--lime); text-underline-offset: 3px; }
   margin-bottom: 12px;
   text-wrap: pretty;
 }
+.sheet__steps { margin: 0 0 16px; }
+.sheet__section-title {
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.sheet__steps ol { display: grid; gap: 8px; padding-left: 22px; color: var(--ink); }
+.sheet__steps li { padding-left: 3px; font-size: 15.5px; line-height: 1.4; }
+.sheet .focus-tags { margin: 0 0 16px; }
 .sheet__stop {
   padding: 10px 12px;
   border-left: 2px solid var(--amber);
@@ -1222,7 +1271,17 @@ a { color: var(--lime); text-underline-offset: 3px; }
   padding-top: 3px;
 }
 .sheet__value { color: var(--ink-2); }
-.sheet__source { font-size: 13.5px; color: var(--ink-3); }
+.sheet__source {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 2px;
+  color: var(--cyan);
+  font-size: 13.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
 .sheet__source a { font-weight: 600; }
 
 /* ============================================================ RUN  view === */
@@ -1330,8 +1389,9 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   flex: none;
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px;
+  gap: 6px 12px;
   padding: 2px var(--pad) 0;
 }
 .phase {
@@ -1376,41 +1436,84 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
    Let it grow into the space the spacer was wasting instead of sitting as a
    112px thumbnail with ~400px of dead room beneath it. */
 .run__media {
-  flex: 1 1 auto;
+  flex: none;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 10px;
-  padding: 12px var(--pad) 0;
+  gap: 7px;
+  padding: 8px var(--pad) 0;
   min-height: 0;
 }
 .run__vidwrap {
-  flex: 1 1 auto;
-  min-height: 120px;
-  aspect-ratio: auto;
+  flex: none;
+  position: relative;
+  height: clamp(108px, 15dvh, 140px);
   border-radius: var(--r-3);
   overflow: hidden;
   background: #0a0c0e;
   border: 1px solid var(--line);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .03);
 }
-.run__vid { display: block; width: 100%; height: 100%; object-fit: cover; }
-.run__meta { display: grid; gap: 6px; min-width: 0; padding-top: 2px; }
+.run__vid {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.run__meta { display: grid; gap: 5px; min-width: 0; padding-top: 1px; }
 
 .ex-name {
-  font-size: clamp(20px, 5.8vw, 27px);
+  font-size: clamp(19px, 5.3vw, 25px);
   font-weight: 700;
   line-height: 1.12;
   letter-spacing: -.025em;
   text-wrap: balance;
 }
 .ex-cue {
-  font-size: 14.5px;
-  line-height: 1.45;
+  font-size: 13.5px;
+  line-height: 1.35;
   color: var(--ink-2);
   text-wrap: pretty;
 }
 .ex-cue:empty { display: none; }
+
+/* These are the live, arm's-length directions. They deliberately stay in the
+   run column instead of the disclosure below, so a first-time move never
+   requires a scroll or a tap mid-set. */
+.run__steps {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink);
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.run__steps:empty { display: none; }
+.run__steps li { display: grid; grid-template-columns: 13px minmax(0, 1fr); gap: 6px; }
+.run__steps li::before { content: "•"; color: var(--phase); font-size: 19px; line-height: .95; }
+.run__resources { display: grid; gap: 6px; min-width: 0; }
+.run__resources .focus-tags { gap: 4px; }
+.run__resources .focus-tag { min-height: 20px; font-size: 9px; padding: 3px 6px; }
+.run__source:empty, .run__source[hidden] { display: none; }
+.run__source-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-1);
+  background: var(--bg-3);
+  color: var(--cyan);
+  font-size: 12px;
+  line-height: 1.25;
+}
+.run__source-icon { flex: none; font-size: 16px; font-weight: 700; }
+.run__source-label { flex: none; font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.run__source-meta { min-width: 0; color: var(--ink-2); overflow-wrap: anywhere; }
 
 .ex-stop {
   flex: none;
@@ -1429,7 +1532,7 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   font-weight: 700;
 }
 
-.run__spacer { flex: 0 0 0; min-height: 0; }
+.run__spacer { flex: 1 0 0; min-height: 0; }
 
 .upnext {
   flex: none;
@@ -1450,9 +1553,7 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
 .upnext__line .label { flex: none; }
 #up-next {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 #up-next:empty::before { content: "-"; color: var(--ink-3); }
 
@@ -1584,17 +1685,14 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
 
 /* ================================================== responsive + a11y ==== */
 
-/* Short viewports (landscape phone, small Android): shrink the clock and drop
-   the demo clip rather than letting the deck fall off the screen. */
+/* Short viewports keep the demo visible and scroll to fit the content. */
 @media (max-height: 660px) {
   .clock { font-size: clamp(72px, 24vw, 120px); }
   .run__media { padding-top: 10px; }
   .tbtn { min-height: 58px; }
   .tbtn--sm { min-height: 46px; }
 }
-@media (max-height: 540px) {
-  .run__media, .ex-stop { display: none; }
-}
+
 
 /* Wider screens: the app stays a phone-shaped instrument, it does not sprawl.
    Only the library grid earns the extra column (handled above). */
@@ -1696,8 +1794,7 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
   padding-bottom: var(--safe-b);
 }
 .player.hidden { display: none; }
-.player__frame { flex: 0 0 auto; }
-.player__frame { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+.player__frame { flex: 0 0 auto; position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; }
 .player__frame iframe {
   position: absolute; inset: 0;
   width: 100%; height: 100%; border: 0; display: block;
@@ -1777,31 +1874,6 @@ body.prep #view-run, #view-run[data-phase="prep"] { --phase: var(--amber); }
 /* page behind a fullscreen overlay must not scroll */
 body.no-scroll { overflow: hidden; }
 
-/* ---- run view fit (reported squished + video cut off on device) ---- */
-/* Give the media a real, uncrushable share of the screen and stop the flex
-   column from shrinking children below their content size. */
-.view--run > * { flex-shrink: 0; }
-/* `contain` so the demo is never cropped (reported: "the videos are also cut
-   off"), and the wrapper takes the clip's own aspect ratio so `contain` does
-   not leave a black band under it. */
-.run__media { flex: 0 1 auto; min-height: 0; }
-.run__vidwrap {
-  min-height: 0;
-  max-height: 42dvh;
-  aspect-ratio: auto;
-  display: flex;
-  background: transparent;
-  border: 0;
-}
-.run__vid {
-  object-fit: contain;
-  width: 100%;
-  height: auto;
-  max-height: 42dvh;
-  background: transparent;
-  border-radius: var(--r-3);
-}
 
-@media (max-height: 750px) {
-  .run__vidwrap, .run__vid { max-height: 32dvh; }
-}
+.picker[data-swapping="true"] .picker-item::after { content: "Swap"; }
+.sheet__source { overflow-wrap: anywhere; }

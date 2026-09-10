@@ -40,7 +40,7 @@
       Videos
     </button>
     <button type="button" id="btn-open-library" class="btn btn--ghost btn--sm">
-      Exercises <span class="btn__count" id="library-count">46</span>
+      Exercises <span class="btn__count" id="library-count">--</span>
     </button>
   </header>
 
@@ -155,7 +155,7 @@
           <label class="field__label" for="set-rounds">Rounds</label>
           <div class="field__control">
             <input class="field__input" id="set-rounds" name="rounds" type="number"
-                   inputmode="numeric" min="1" max="8" step="1" value="3">
+                   inputmode="numeric" min="1" max="6" step="1" value="3">
             <span class="field__unit" aria-hidden="true">x</span>
           </div>
           <output class="field__out" id="set-rounds-out" for="set-rounds"></output>
@@ -165,7 +165,7 @@
           <label class="field__label" for="set-prep">Prep</label>
           <div class="field__control">
             <input class="field__input" id="set-prep" name="prep" type="number"
-                   inputmode="numeric" min="0" max="60" step="5" value="10">
+                   inputmode="numeric" min="0" max="30" step="5" value="10">
             <span class="field__unit" aria-hidden="true">sec</span>
           </div>
           <output class="field__out" id="set-prep-out" for="set-prep"></output>
@@ -282,7 +282,7 @@
       </div>
       <!-- Agent B injects .picker-item buttons here. The list scrolls inside
            the panel so the session above never leaves the screen. -->
-      <div id="builder-picker" class="picker">
+      <div id="builder-picker" class="picker" hidden>
         <p class="empty">The full exercise library lands here. Tap a row to append it to the session.</p>
       </div>
     </div>
@@ -366,9 +366,9 @@
     </div>
   </div>
 
-  <!-- Detail panel. Agent B owns the innerHTML and toggles the `hidden` class.
+  <!-- Detail panel. library.js owns the content and toggles the hidden attribute.
        Styled hooks are listed at the top of styles.css. -->
-  <aside id="library-detail" class="sheet hidden" aria-label="Exercise detail"></aside>
+  <aside id="library-detail" class="sheet" hidden aria-label="Exercise detail"></aside>
 
 </section>
 
@@ -378,7 +378,7 @@
 
   <div class="progress-track">
     <div id="progress-bar" class="progress-fill" role="progressbar"
-         aria-label="Session progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+         aria-label="Interval progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
   </div>
 
   <header class="run__top">
@@ -408,6 +408,11 @@
     <div class="run__meta">
       <h3 id="ex-name" class="ex-name">Kettlebell Halo</h3>
       <p id="ex-cue" class="ex-cue"></p>
+      <ul id="ex-steps" class="run__steps" aria-label="Movement steps"></ul>
+      <div class="run__resources">
+        <div id="ex-focus" class="focus-tags" aria-label="Exercise targets"></div>
+        <div id="ex-source" class="run__source"></div>
+      </div>
     </div>
   </div>
 

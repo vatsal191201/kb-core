@@ -23,7 +23,8 @@
   "sourceChannel": "Vadim Kettlebell",
   "sourceUrl": "https://www.youtube.com/watch?v=h6xk6K1ff00",
   "sourceStart": 22,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Bell by the chest, elbows tucked, feet hip width.","Circle it tight around the head, then reverse direction.","Squeeze glutes so no arch appears as it passes behind."]
  },
  {
   "id": "around-world",
@@ -48,7 +49,8 @@
   "sourceChannel": "Obi Vincent",
   "sourceUrl": "https://www.youtube.com/watch?v=-zwR8KqmWIQ",
   "sourceStart": 170,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Stand tall, feet planted, bell in one hand at hip.","Pass it behind the hips, catch with the other hand.","Only the hands travel \u2014 hips stay square, zero sway."]
  },
  {
   "id": "overhead-press-hold",
@@ -74,7 +76,8 @@
   "sourceChannel": "Obi Vincent",
   "sourceUrl": "https://www.youtube.com/watch?v=-zwR8KqmWIQ",
   "sourceStart": 270,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Press the bell up, biceps beside the ear, elbow locked.","Hold dead still: glutes on, ribs stacked over pelvis.","Breathe shallow into the belly; the bell must not drift forward."]
  },
  {
   "id": "single-arm-overhead-hold",
@@ -100,7 +103,8 @@
   "sourceChannel": "Obi Vincent",
   "sourceUrl": "https://www.youtube.com/watch?v=-zwR8KqmWIQ",
   "sourceStart": 295,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Bell locked overhead, eyes on it, front foot turned out.","Slide the free hand down the inside of that leg.","Push the hips sideways, not forward; swap hands at halfway."]
  },
  {
   "id": "overhead-lunge",
@@ -128,7 +132,8 @@
   "sourceChannel": "Obi Vincent",
   "sourceUrl": "https://www.youtube.com/watch?v=-zwR8KqmWIQ",
   "sourceStart": 345,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lock the bell overhead and keep that elbow straight throughout.","Hinge the loaded hip back, hand travelling toward the floor.","Track the bell with your eyes the whole way, then mirror."]
  },
  {
   "id": "halfkneel-windmill",
@@ -154,7 +159,8 @@
   "sourceChannel": "Samuel Jordan",
   "sourceUrl": "https://www.youtube.com/watch?v=6-ubha5Pico",
   "sourceStart": 124,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Half-kneel tall, bell locked overhead, eyes fixed on it.","Hinge sideways over the front hip, free hand toward floor.","The down-side obliques pull you back up; then switch knees."]
  },
  {
   "id": "bench-plank-row",
@@ -181,7 +187,8 @@
   "sourceChannel": "Obi Vincent",
   "sourceUrl": "https://www.youtube.com/watch?v=-zwR8KqmWIQ",
   "sourceStart": 423,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Hands on the bench, feet wide, body one long line.","Row the bell to the ribs, elbow past your torso.","Keep the bench edge level with your shoulders; then switch sides."]
  },
  {
   "id": "bench-renegade-row",
@@ -207,7 +214,8 @@
   "sourceChannel": "Obi Vincent",
   "sourceUrl": "https://www.youtube.com/watch?v=-zwR8KqmWIQ",
   "sourceStart": 447,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Wide feet, hands on the bench, shoulders stacked over wrists.","Row one side at a time, pausing at the ribs.","Push hard through the supporting hand so hips never rock; alternate."]
  },
  {
   "id": "plank-kettlebell-drag",
@@ -234,7 +242,8 @@
   "sourceChannel": "Obi Vincent",
   "sourceUrl": "https://www.youtube.com/watch?v=-zwR8KqmWIQ",
   "sourceStart": 520,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["High plank, feet wider than usual, bell outside one hand.","Reach across and drag it under the chest to the far side.","Widen the stance until the hips stop rocking \u2014 that's the work."]
  },
  {
   "id": "high-plank-reach",
@@ -260,7 +269,8 @@
   "sourceChannel": "Obi Vincent",
   "sourceUrl": "https://www.youtube.com/watch?v=-zwR8KqmWIQ",
   "sourceStart": 519,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Start in a plank, hands wide, then push hips skyward.","Press the floor away, lengthen the spine, drive heels down.","Bend the knees slightly rather than round the back."]
  },
  {
   "id": "kb-situp",
@@ -285,7 +295,8 @@
   "sourceChannel": "Samuel Jordan",
   "sourceUrl": "https://www.youtube.com/watch?v=6-ubha5Pico",
   "sourceStart": 56,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie back, knees bent, bell held against the chest.","Curl up one vertebra at a time until sitting tall.","Let the abs move the bell \u2014 arms only carry it."]
  },
  {
   "id": "plank-pull-through",
@@ -312,7 +323,8 @@
   "sourceChannel": "Samuel Jordan",
   "sourceUrl": "https://www.youtube.com/watch?v=6-ubha5Pico",
   "sourceStart": 256,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["High plank, hands under shoulders, bell parked beside one wrist.","Pull it through to the far side, then send it back.","Grip the floor with the free hand; hips stay frozen."]
  },
  {
   "id": "half-kneeling-woodchop-l-to",
@@ -338,7 +350,8 @@
   "sourceChannel": "Samuel Jordan",
   "sourceUrl": "https://www.youtube.com/watch?v=6-ubha5Pico",
   "sourceStart": 316,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Half-kneel, both hands on the bell beside the down hip.","Drive it diagonally up and across past the opposite shoulder.","Turn the ribcage, never the low back; then kneel other side."]
  },
  {
   "id": "russian-twist",
@@ -363,7 +376,8 @@
   "sourceChannel": "Samuel Jordan",
   "sourceUrl": "https://www.youtube.com/watch?v=6-ubha5Pico",
   "sourceStart": 496,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Sit tall, lean back slightly, heels down, bell at chest.","Rotate the bell hip to hip, chest following your hands.","Stop the second your chest sinks and the back rounds."]
  },
  {
   "id": "goblet-squat",
@@ -388,7 +402,8 @@
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=VCcar3MA07w",
   "sourceStart": 95,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Cradle the bell at your chest, feet just outside hips.","Sit straight down until the elbows pass inside the knees.","Keep the whole foot pressed down; heels lifting means go shallower."]
  },
  {
   "id": "kettlebell-swing",
@@ -413,7 +428,8 @@
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=VCcar3MA07w",
   "sourceStart": 128,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Feet planted, bell ahead of you, hinge and hike it back.","Snap the hips forward; the bell floats to chest height.","Sharp exhale at the top, arms staying relaxed ropes."]
  },
  {
   "id": "alternating-lunge-pass-under",
@@ -439,7 +455,8 @@
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=VCcar3MA07w",
   "sourceStart": 177,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Step back into a lunge, both knees near ninety degrees.","At the bottom, pass the bell under the front thigh.","Stay tall as it passes; alternate legs every rep."]
  },
  {
   "id": "uneven-lunge",
@@ -466,7 +483,8 @@
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=VCcar3MA07w",
   "sourceStart": 263,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Hold the bell on one side only and stand tall.","Lunge under control, keeping both shoulders perfectly level.","Fight the sideways pull with the opposite oblique; then swap sides."]
  },
  {
   "id": "romanian-deadlift",
@@ -491,7 +509,8 @@
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=VCcar3MA07w",
   "sourceStart": 436,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Stand tall, bell in both hands, knees softly unlocked.","Push the hips back, bell brushing down the thighs.","Stop where the hamstrings tighten \u2014 that's your depth."]
  },
  {
   "id": "overhead-press",
@@ -517,7 +536,8 @@
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=VCcar3MA07w",
   "sourceStart": 806,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Rack the bell at your chest, elbow tucked, wrist stacked.","Press straight overhead until the biceps finish beside the ear.","Squeeze the glutes so you press up instead of leaning back."]
  },
  {
   "id": "floor-press",
@@ -542,7 +562,8 @@
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=VCcar3MA07w",
   "sourceStart": 905,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie on your back, knees bent, bell pressed over chest.","Lower until the triceps kiss the floor, elbows at forty-five.","Pause on the floor to kill momentum, then press."]
  },
  {
   "id": "standing-cross-chops",
@@ -568,7 +589,8 @@
   "sourceChannel": "Vadim Kettlebell",
   "sourceUrl": "https://www.youtube.com/watch?v=h6xk6K1ff00",
   "sourceStart": 3,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Feet wide, bell in both hands high beside one shoulder.","Chop it diagonally down toward the opposite knee.","Let the back heel pivot as the ribs turn; switch diagonals."]
  },
  {
   "id": "overhead-march",
@@ -596,7 +618,8 @@
   "sourceChannel": "Obi Vincent",
   "sourceUrl": "https://www.youtube.com/watch?v=-zwR8KqmWIQ",
   "sourceStart": 286,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Press one bell overhead, free arm reaching straight out sideways.","March on the spot, lifting knees while staying stacked.","Refuse to lean away from the load; then press the other arm."]
  },
  {
   "id": "plank-side-drag",
@@ -623,7 +646,8 @@
   "sourceChannel": "Vadim Kettlebell",
   "sourceUrl": "https://www.youtube.com/watch?v=h6xk6K1ff00",
   "sourceStart": 10,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["High plank, bell just outside one hand, feet set wide.","That same hand drags it across under the chest.","Slow the drag down; speed is what makes hips swing. Switch sides."]
  },
  {
   "id": "atlas-swing",
@@ -648,7 +672,8 @@
   "sourceChannel": "Vadim Kettlebell",
   "sourceUrl": "https://www.youtube.com/watch?v=h6xk6K1ff00",
   "sourceStart": 28,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Set up like a swing: hinge, hike, feet firm.","Swing up, then let the bell orbit around your body.","If the arms are steering, reset \u2014 the hinge powers each loop."]
  },
  {
   "id": "kickstand-side-crunch",
@@ -673,7 +698,8 @@
   "sourceChannel": "Vadim Kettlebell",
   "sourceUrl": "https://www.youtube.com/watch?v=h6xk6K1ff00",
   "sourceStart": 33,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie on your side, top foot behind as a kickstand.","Crunch the ribs straight down toward the hip below.","No twisting \u2014 you are only shortening one side; then flip over."]
  },
  {
   "id": "deadbug",
@@ -698,7 +724,8 @@
   "sourceChannel": "Vadim Kettlebell",
   "sourceUrl": "https://www.youtube.com/watch?v=h6xk6K1ff00",
   "sourceStart": 37,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie back, bell pressed over the chest, knees at ninety.","Extend one leg long while the bell stays perfectly still.","Exhale slowly as that leg lowers, low back glued down."]
  },
  {
   "id": "pullover-crunch",
@@ -723,7 +750,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 47,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie back, bell held overhead, arms straight, low back flat.","Sweep it over and crunch up, moving as one piece.","Reach only as far overhead as the ribs stay down."]
  },
  {
   "id": "uneven-rotation-plank",
@@ -751,7 +779,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 107,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Plank with one hand on the bell, other on floor.","Open slowly into a side plank, letting the hips turn last.","Return even slower, then set the bell under the other hand."]
  },
  {
   "id": "kettlebell-hold-knee-pulls",
@@ -776,7 +805,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 227,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie back holding the bell steady above your chest.","Pull both knees toward the ribs, then extend the legs long.","Extend only as far as the low back stays flat."]
  },
  {
   "id": "low-plank-hip-twist",
@@ -803,7 +833,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 287,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Forearms down, elbows under shoulders, feet about hip width.","Dip one hip toward the floor, then the other.","Keep it slow and small \u2014 bouncing off the floor doesn't count."]
  },
  {
   "id": "hip-lifts",
@@ -829,7 +860,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 347,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie back, knees bent, bell resting across the hips.","Drive through the heels until knees, hips and shoulders line up.","Finish with a glute squeeze, not a low-back arch."]
  },
  {
   "id": "side-to-side-leg-lift-knee-pull",
@@ -854,7 +886,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 467,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie back, legs up, bell held overhead as an anchor.","Take both legs to one side, pull the knees in.","Alternate sides and keep ribs pinned; shorten range if the back arches."]
  },
  {
   "id": "weighted-jackknife",
@@ -880,7 +913,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 647,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie flat, bell locked overhead, arms by ears, legs straight.","Fold at the hips; hands and feet meet above the belly.","Press the bell at the ceiling to feel the lower abs bite."]
  },
  {
   "id": "hip-drop-alternating-knee-tuck",
@@ -905,7 +939,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 707,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Set a long plank line, shoulders over wrists, feet hip-width.","Drop one hip toward the floor, then tuck the opposite knee.","One beat per phase: drop, tuck, reset; never chain them fast."]
  },
  {
   "id": "high-plank-transporter",
@@ -934,7 +969,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 827,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["High plank, feet wider than shoulders, bell outside one hand.","Drag the bell across under your chest, then reach and repeat.","Widen the feet if hips rotate; switch direction at thirty seconds."]
  },
  {
   "id": "leg-raise-hip-lift",
@@ -961,7 +997,8 @@
   "sourceChannel": "DANIELPT FITNESS",
   "sourceUrl": "https://www.youtube.com/watch?v=sewaX21jfoU",
   "sourceStart": 886,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie flat, hold the bell steady overhead, legs together.","Raise the legs vertical, then press the hips straight up.","Push the feet at the ceiling, not forward; hips lift inches."]
  },
  {
   "id": "suitcase-march",
@@ -987,7 +1024,8 @@
   "sourceChannel": "JTM_FIT",
   "sourceUrl": "https://www.youtube.com/watch?v=ByUxQODHzes",
   "sourceStart": 90,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["One bell in one hand, stand tall, shoulders level.","March knees to hip height, slow and even, bell hanging.","Squeeze the free-side oblique to stay vertical; swap hands halfway."]
  },
  {
   "id": "bird-dog",
@@ -1012,7 +1050,8 @@
   "sourceChannel": "JTM_FIT",
   "sourceUrl": "https://www.youtube.com/watch?v=ByUxQODHzes",
   "sourceStart": 214,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Hands under shoulders, knees under hips, spine long and neutral.","Extend opposite arm and leg to full length, then switch.","Imagine balancing a glass on your low back; move slowly."]
  },
  {
   "id": "woodchop",
@@ -1038,7 +1077,8 @@
   "sourceChannel": "Samuel Jordan",
   "sourceUrl": "https://www.youtube.com/watch?v=6-ubha5Pico",
   "sourceStart": 295,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Half kneeling, back knee down, front foot planted, both hands gripping.","Chop from high outside the shoulder down past the front knee.","Turn the ribcage over the hips; the low back stays quiet."]
  },
  {
   "id": "kb-pullover",
@@ -1063,7 +1103,8 @@
   "sourceChannel": "Samuel Jordan",
   "sourceUrl": "https://www.youtube.com/watch?v=6-ubha5Pico",
   "sourceStart": 425,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie back, bell in both hands over the chest, knees bent.","Reach the bell back past your head, elbows nearly straight.","Stop the reach the instant the low back wants to arch."]
  },
  {
   "id": "sideplank-knee",
@@ -1090,7 +1131,8 @@
   "sourceChannel": "JTM_FIT",
   "sourceUrl": "https://www.youtube.com/watch?v=ByUxQODHzes",
   "sourceStart": 487,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Forearm down, elbow under shoulder, hips stacked and lifted.","Draw the top knee up to meet the top elbow.","Push the bottom shoulder away from the floor; mirror after thirty seconds."]
  },
  {
   "id": "hollow-rock",
@@ -1116,7 +1158,8 @@
   "sourceChannel": "JTM_FIT",
   "sourceUrl": "https://www.youtube.com/watch?v=ByUxQODHzes",
   "sourceStart": 366,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Low back flat, arms and legs long, shoulder blades raised.","Rock the whole body as one rigid banana shape.","Rock from the shoulders, not the knees; shrink range if ribs flare."]
  },
  {
   "id": "sprinter-situp",
@@ -1141,7 +1184,8 @@
   "sourceChannel": "JTM_FIT",
   "sourceUrl": "https://www.youtube.com/watch?v=ByUxQODHzes",
   "sourceStart": 634,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie back, hands light at the temples, legs straight.","Sit up driving one knee and the opposite elbow together.","Lead with the ribcage, hands never pulling; switch sides at halfway."]
  },
  {
   "id": "highplank-tap",
@@ -1167,7 +1211,8 @@
   "sourceChannel": "Samuel Jordan",
   "sourceUrl": "https://www.youtube.com/watch?v=6-ubha5Pico",
   "sourceStart": 530,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["High plank, bell just outside one hand, feet wide.","Reach across and tap the bell, alternating hands each rep.","Keep both hip bones pointing at the floor while you reach."]
  },
  {
   "id": "leg-raise",
@@ -1193,7 +1238,8 @@
   "sourceChannel": "Samuel Jordan",
   "sourceUrl": "https://www.youtube.com/watch?v=6-ubha5Pico",
   "sourceStart": 600,
-  "equipment": "kettlebell"
+  "equipment": "kettlebell",
+  "steps": ["Lie flat with the bell standing upright beside your heels.","Raise the legs, then lower slowly over and past the bell.","Let the bell set your bottom stop; heels never touch down."]
  },
  {
   "id": "side-to-side-halo",
@@ -1220,7 +1266,8 @@
   "block": "main",
   "equipment": "kettlebell",
   "video": "media/side-to-side-halo.mp4",
-  "poster": "media/side-to-side-halo.jpg"
+  "poster": "media/side-to-side-halo.jpg",
+  "steps": ["Balance in a V-sit, heels up, bell at the chest.","Circle the bell around your head, then reverse the direction.","Chest stays tall as the bell passes behind; feet never drop."]
  },
  {
   "id": "over-shoulder-toss",
@@ -1247,7 +1294,8 @@
   "block": "main",
   "equipment": "kettlebell",
   "video": "media/over-shoulder-toss.mp4",
-  "poster": "media/over-shoulder-toss.jpg"
+  "poster": "media/over-shoulder-toss.jpg",
+  "steps": ["Tall kneeling, glutes squeezed, bell held low between the thighs.","Swing the bell up over the same shoulder each rep.","Rotate ribs only, hips locked forward; change shoulders at halfway."]
  },
  {
   "id": "side-to-side-leg-raise",
@@ -1273,7 +1321,8 @@
   "block": "main",
   "equipment": "kettlebell",
   "video": "media/side-to-side-leg-raise.mp4",
-  "poster": "media/side-to-side-leg-raise.jpg"
+  "poster": "media/side-to-side-leg-raise.jpg",
+  "steps": ["Legs straight and raised, palms flat beside your hips.","Sweep both legs to one side, then across to the other.","Move slowest at the outside edges where the obliques load hardest."]
  },
  {
   "id": "half-kneeling-wood-chop",
@@ -1299,7 +1348,8 @@
   "block": "main",
   "equipment": "kettlebell",
   "video": "media/half-kneeling-wood-chop.mp4",
-  "poster": "media/half-kneeling-wood-chop.jpg"
+  "poster": "media/half-kneeling-wood-chop.jpg",
+  "steps": ["Front foot forward, back knee down, both hands on the handle.","Chop high to low diagonally, finishing outside the front hip.","Back glute on so the front knee never caves; switch halfway."]
  },
  {
   "id": "bw-high-knee-taps",
@@ -1325,7 +1375,8 @@
   "sourceTitle": "6 PACK ABS For Beginners You Can Do Anywhere",
   "sourceChannel": "THENX",
   "sourceUrl": "https://www.youtube.com/watch?v=3p8EBPVZ2Iw",
-  "sourceStart": 90
+  "sourceStart": 90,
+  "steps": ["Stand tall, hands held at hip height as your target.","Drive the knees up to tap the hands, quick and light.","Stay upright and let the hip flexors do the lifting."]
  },
  {
   "id": "bw-hanging-style-leg-raises",
@@ -1350,7 +1401,8 @@
   "sourceTitle": "6 PACK ABS For Beginners You Can Do Anywhere",
   "sourceChannel": "THENX",
   "sourceUrl": "https://www.youtube.com/watch?v=3p8EBPVZ2Iw",
-  "sourceStart": 199
+  "sourceStart": 199,
+  "steps": ["Lie flat, arms anchored beside you, legs locked straight.","Raise the legs to vertical, then lower under full control.","Stop just short of the floor and go straight back up."]
  },
  {
   "id": "bw-hip-raises",
@@ -1375,7 +1427,8 @@
   "sourceTitle": "6 PACK ABS For Beginners You Can Do Anywhere",
   "sourceChannel": "THENX",
   "sourceUrl": "https://www.youtube.com/watch?v=3p8EBPVZ2Iw",
-  "sourceStart": 261
+  "sourceStart": 261,
+  "steps": ["Legs vertical over the hips, arms pressing into the floor.","Punch the feet upward, lifting the hips a few inches.","All lift comes from curling the pelvis, no leg swing."]
  },
  {
   "id": "bw-flutter-kicks",
@@ -1400,7 +1453,8 @@
   "sourceTitle": "6 PACK ABS For Beginners You Can Do Anywhere",
   "sourceChannel": "THENX",
   "sourceUrl": "https://www.youtube.com/watch?v=3p8EBPVZ2Iw",
-  "sourceStart": 324
+  "sourceStart": 324,
+  "steps": ["Legs low and straight, hands under the hips, back flat.","Alternate small fast kicks without letting the heels touch.","If the back arches, raise both legs higher and keep fluttering."]
  },
  {
   "id": "bw-plank-knee-to-elbow",
@@ -1425,7 +1479,8 @@
   "sourceTitle": "6 PACK ABS For Beginners You Can Do Anywhere",
   "sourceChannel": "THENX",
   "sourceUrl": "https://www.youtube.com/watch?v=3p8EBPVZ2Iw",
-  "sourceStart": 378
+  "sourceStart": 378,
+  "steps": ["High plank, hands under shoulders, heels driving back.","Bring one knee outside to the same-side elbow, then alternate.","Keep the hips low and level as the knee travels forward."]
  },
  {
   "id": "bw-seated-in-outs",
@@ -1451,7 +1506,8 @@
   "sourceTitle": "6 PACK ABS For Beginners You Can Do Anywhere",
   "sourceChannel": "THENX",
   "sourceUrl": "https://www.youtube.com/watch?v=3p8EBPVZ2Iw",
-  "sourceStart": 498
+  "sourceStart": 498,
+  "steps": ["Sit balanced just behind the hips, hands light on the floor.","Extend legs and torso away, then tuck both back in.","Chest leads on every tuck; never let the back round."]
  },
  {
   "id": "bw-scissor-kicks",
@@ -1476,7 +1532,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 0
+  "sourceStart": 0,
+  "steps": ["Hands under the glutes, legs straight and lifted slightly.","Cross and open the legs in quick shallow scissors.","Ribs pinned down; widen the scissor only as control allows."]
  },
  {
   "id": "bw-lying-leg-raise",
@@ -1501,7 +1558,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 43
+  "sourceStart": 43,
+  "steps": ["Flat on your back, palms pressed down, legs zipped together.","Lift the legs vertical and nudge the hips up at the top.","Lower at half the speed you raised them."]
  },
  {
   "id": "bw-feet-crossovers",
@@ -1526,7 +1584,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 73
+  "sourceStart": 73,
+  "steps": ["Legs lifted and straight, ribs pulled toward the pelvis.","Cross one foot over the other, then switch the top foot.","Hold the same height throughout; no sinking as you alternate."]
  },
  {
   "id": "bw-reverse-crunch",
@@ -1551,7 +1610,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 104
+  "sourceStart": 104,
+  "steps": ["Knees bent, hands flat beside you, shins over the hips.","Curl the knees toward the chest, hips leaving the floor.","Roll the pelvis up slowly, then resist all the way down."]
  },
  {
   "id": "bw-l-sit-toe-touches",
@@ -1576,7 +1636,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 133
+  "sourceStart": 133,
+  "steps": ["Legs up vertical in an L, arms reaching toward the toes.","Crunch the shoulder blades off the floor, fingers to the toes.","Chin off the chest and reach with the ribs, not the neck."]
  },
  {
   "id": "bw-plank-knee-ins",
@@ -1602,7 +1663,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 193
+  "sourceStart": 193,
+  "steps": ["High plank, long spine, weight forward over the hands.","Pull one knee in toward its elbow, then swap knees.","Hips stay pinned level; pull with the oblique, not the hip."]
  },
  {
   "id": "bw-spiderman-push-ups",
@@ -1628,7 +1690,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 223
+  "sourceStart": 223,
+  "steps": ["Plank set, hands under the chest, body one straight line.","Lower into the push-up as one knee drives to that elbow.","Knee arrives and leaves with the chest, one smooth rhythm."]
  },
  {
   "id": "bw-side-plank-raises",
@@ -1654,7 +1717,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 270
+  "sourceStart": 270,
+  "steps": ["Side plank on the forearm, feet stacked, hips lifted high.","Dip the hip toward the floor, then drive it back up.","Travel straight up and down in one line, no drifting forward."]
  },
  {
   "id": "bw-mountain-climbers",
@@ -1680,7 +1744,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 313
+  "sourceStart": 313,
+  "steps": ["High plank, shoulders stacked over wrists, hips slightly low.","Drive the knees toward the chest, alternating at speed.","Quick feet, quiet hips; the shoulders hold the plank steady."]
  },
  {
   "id": "bw-oblique-leg-raise",
@@ -1706,7 +1771,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 373
+  "sourceStart": 373,
+  "steps": ["Back flat, legs long and joined, arms anchored at your sides.","Raise the legs, twist both to one side, then alternate.","Twist at the top only, and keep the low back glued down."]
  },
  {
   "id": "bw-bodyweight-crunch",
@@ -1731,7 +1797,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 403
+  "sourceStart": 403,
+  "steps": ["Lie back, knees bent, hands light behind the ears.","Curl only the shoulder blades up; ribs travel toward hips.","Keep a fist of space under the chin throughout."]
  },
  {
   "id": "bw-v-sit-hold",
@@ -1757,7 +1824,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 435
+  "sourceStart": 435,
+  "steps": ["Balance behind the tailbone, legs straight, chest lifted tall.","Hold the V and actively squeeze quads and abs.","Reach fingertips past the toes to stop the back rounding."]
  },
  {
   "id": "bw-sit-up-cross-punch",
@@ -1783,7 +1851,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 554
+  "sourceStart": 554,
+  "steps": ["Feet anchored, sit all the way up each rep.","At the top punch one fist across the opposite knee.","Alternate punch sides; ribs turn, arms never throw you up."]
  },
  {
   "id": "bw-leg-raise-hold",
@@ -1808,7 +1877,8 @@
   "sourceTitle": "10 Minute Home Ab Workout (6 PACK GUARANTEED!)",
   "sourceChannel": "Fraser Wilson",
   "sourceUrl": "https://www.youtube.com/watch?v=uUKAYkQZXko",
-  "sourceStart": 584
+  "sourceStart": 584,
+  "steps": ["Lie flat, hands beside hips, legs straight and joined.","Float the heels a few inches and hold there.","Press the low back down; bend knees if it arches."]
  },
  {
   "id": "bw-plank-twist",
@@ -1834,7 +1904,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 0
+  "sourceStart": 0,
+  "steps": ["Set forearms under shoulders, feet hip width, body flat.","Rotate one hip toward the floor, then the other.","Keep pushing the floor away so shoulders stay stacked."]
  },
  {
   "id": "bw-plank-side-knee-tuck",
@@ -1859,7 +1930,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 68
+  "sourceStart": 68,
+  "steps": ["Start in plank, hands under shoulders, heels driven back.","Draw one knee outside the same-side elbow, then replace it.","Alternate knees; hips stay level, no piking on the tuck."]
  },
  {
   "id": "bw-dead-bug",
@@ -1885,7 +1957,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 128
+  "sourceStart": 128,
+  "steps": ["Lie back, arms to ceiling, knees stacked over hips.","Lower opposite arm and leg slowly, then swap pairs.","Exhale as the limbs reach; low back stays pinned flat."]
  },
  {
   "id": "bw-toe-taps",
@@ -1910,7 +1983,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 188
+  "sourceStart": 188,
+  "steps": ["Set shins parallel to the floor, knees bent ninety degrees.","Tap one toe down, return, then alternate legs.","Lock the knee angle; only the hip should move."]
  },
  {
   "id": "bw-elbow-tuck-to-extension",
@@ -1936,7 +2010,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 248
+  "sourceStart": 248,
+  "steps": ["Prop on both elbows, lean back slightly, feet hovering.","Tuck the knees toward the chest, then extend legs long.","Keep the heels off the floor at full extension."]
  },
  {
   "id": "bw-reach-to-leg-opener",
@@ -1962,7 +2037,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 308
+  "sourceStart": 308,
+  "steps": ["Lie back, legs vertical together, arms resting by hips.","Reach the arms up as the legs open wide.","Squeeze inner thighs to close slowly; no swinging momentum."]
  },
  {
   "id": "bw-straight-leg-reverse-crunch",
@@ -1987,7 +2063,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 368
+  "sourceStart": 368,
+  "steps": ["Point the legs straight at the ceiling, arms pressed down.","Lift the hips a few inches directly upward.","Send the feet up, not back, and never bounce."]
  },
  {
   "id": "bw-leg-lower-to-frog-tuck",
@@ -2012,7 +2089,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 488
+  "sourceStart": 488,
+  "steps": ["Start with straight legs vertical and low back flat.","Lower both legs slowly, then tuck into a frog.","Stop the lower the instant the back starts arching."]
  },
  {
   "id": "bw-table-top-leg-extension",
@@ -2037,7 +2115,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 608
+  "sourceStart": 608,
+  "steps": ["Hands under shoulders, knees under hips, spine long and neutral.","Extend one leg back at hip height, hold, then switch.","Knit the ribs down so they never flare on extension."]
  },
  {
   "id": "bw-opposite-hand-to-foot-chop",
@@ -2062,7 +2141,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 728
+  "sourceStart": 728,
+  "steps": ["Lie back with one leg raised, opposite arm overhead.","Chop that hand diagonally across toward the raised foot.","Alternate diagonals; lead with the ribs, chin stays neutral."]
  },
  {
   "id": "bw-hip-lift-to-twist",
@@ -2088,7 +2168,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 788
+  "sourceStart": 788,
+  "steps": ["Legs vertical, arms wide on the floor for base.","Press the heels up to lift the hips, then twist.","Alternate twist directions; lower if the low back takes over."]
  },
  {
   "id": "bw-crunch-with-pulse",
@@ -2113,7 +2194,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 848
+  "sourceStart": 848,
+  "steps": ["Knees bent, feet flat, fingertips resting lightly at the head.","Curl up, add one short pulse, then lower slowly.","Pulse from the ribs; fingers too light to yank anything."]
  },
  {
   "id": "bw-elbow-to-knee-crunch",
@@ -2139,7 +2221,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 968
+  "sourceStart": 968,
+  "steps": ["Lie back, hands at the ears, knees bent comfortably.","Bring one elbow toward the opposite knee, alternating each rep.","Turn the ribcage; the head follows, never pulls across."]
  },
  {
   "id": "bw-hug-to-hollow",
@@ -2164,7 +2247,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 1028
+  "sourceStart": 1028,
+  "steps": ["Start hugging the shins, head and shoulders off floor.","Extend the arms overhead and legs long into hollow.","Glue the low back down; retuck the moment it lifts."]
  },
  {
   "id": "bw-butterfly-crunch",
@@ -2189,7 +2273,8 @@
   "sourceTitle": "20 Min ABS WORKOUT at Home [NO EQUIPMENT + NO REPEAT]",
   "sourceChannel": "Caroline Girvan",
   "sourceUrl": "https://www.youtube.com/watch?v=3oeimlA6s68",
-  "sourceStart": 1088
+  "sourceStart": 1088,
+  "steps": ["Soles of the feet together, knees dropped wide open.","Crunch the ribs straight up toward the pelvis.","Keep the hips heavy on the floor, no bridging."]
  },
  {
   "id": "bw-ab-bicycles",
@@ -2215,7 +2300,8 @@
   "sourceTitle": "10 MIN TOTAL AB EXPRESS WORKOUT - No Repeat, No Equipment",
   "sourceChannel": "growingannanas",
   "sourceUrl": "https://www.youtube.com/watch?v=PlqWX_cv7bc",
-  "sourceStart": 17
+  "sourceStart": 17,
+  "steps": ["Shoulders off the floor, legs cycling above the hips.","Rotate one shoulder toward the opposite knee, then switch.","Slow enough to feel the twist land in each side."]
  },
  {
   "id": "bw-alternating-tuck-up",
@@ -2241,7 +2327,8 @@
   "sourceTitle": "10 MIN TOTAL AB EXPRESS WORKOUT - No Repeat, No Equipment",
   "sourceChannel": "growingannanas",
   "sourceUrl": "https://www.youtube.com/watch?v=PlqWX_cv7bc",
-  "sourceStart": 58
+  "sourceStart": 58,
+  "steps": ["Sit back slightly, hands beside the hips for balance.","Crunch the chest up as one knee tucks in.","Alternate knees; stay planted on the tailbone without rocking."]
  },
  {
   "id": "bw-full-tuck-ups",
@@ -2267,7 +2354,8 @@
   "sourceTitle": "10 MIN TOTAL AB EXPRESS WORKOUT - No Repeat, No Equipment",
   "sourceChannel": "growingannanas",
   "sourceUrl": "https://www.youtube.com/watch?v=PlqWX_cv7bc",
-  "sourceStart": 89
+  "sourceStart": 89,
+  "steps": ["Start long, arms overhead, legs straight and hovering low.","Fold arms and knees in together, balancing on the hips.","Exhale hard at the fold; unfold slowly without crashing back."]
  },
  {
   "id": "bw-supported-flutter-kicks",
@@ -2292,7 +2380,8 @@
   "sourceTitle": "10 MIN TOTAL AB EXPRESS WORKOUT - No Repeat, No Equipment",
   "sourceChannel": "growingannanas",
   "sourceUrl": "https://www.youtube.com/watch?v=PlqWX_cv7bc",
-  "sourceStart": 120
+  "sourceStart": 120,
+  "steps": ["Slide both palms down under the hips for support.","Kick small quick alternating flutters with legs nearly straight.","Keep the range tiny; raise the legs if the back arches."]
  },
  {
   "id": "bw-low-plank-hold",
@@ -2317,7 +2406,8 @@
   "sourceTitle": "10 MIN TOTAL AB EXPRESS WORKOUT - No Repeat, No Equipment",
   "sourceChannel": "growingannanas",
   "sourceUrl": "https://www.youtube.com/watch?v=PlqWX_cv7bc",
-  "sourceStart": 335
+  "sourceStart": 335,
+  "steps": ["Elbows directly under shoulders, forearms parallel, feet hip width.","Squeeze the glutes and tuck the ribs into one line.","Breathe shallow into the brace; hips neither sag nor spike."]
  },
  {
   "id": "bw-low-plank-dips",
@@ -2343,7 +2433,8 @@
   "sourceTitle": "10 MIN TOTAL AB EXPRESS WORKOUT - No Repeat, No Equipment",
   "sourceChannel": "growingannanas",
   "sourceUrl": "https://www.youtube.com/watch?v=PlqWX_cv7bc",
-  "sourceStart": 397
+  "sourceStart": 397,
+  "steps": ["Forearm plank with feet slightly wider for a stable base.","Dip one hip toward the floor, then the other.","Alternate sides slowly; shoulders stay parked over the elbows."]
  },
  {
   "id": "bw-side-plank",
@@ -2369,7 +2460,8 @@
   "sourceTitle": "10 MIN TOTAL AB EXPRESS WORKOUT - No Repeat, No Equipment",
   "sourceChannel": "growingannanas",
   "sourceUrl": "https://www.youtube.com/watch?v=PlqWX_cv7bc",
-  "sourceStart": 428
+  "sourceStart": 428,
+  "steps": ["Elbow under shoulder, feet stacked, top hand on hip.","Drive the bottom hip up into one straight line.","Hold, then rebuild on the other elbow for equal time."]
  },
  {
   "id": "bw-alternating-leg-raises",
@@ -2394,7 +2486,8 @@
   "sourceTitle": "10 MIN TOTAL AB EXPRESS WORKOUT - No Repeat, No Equipment",
   "sourceChannel": "growingannanas",
   "sourceUrl": "https://www.youtube.com/watch?v=PlqWX_cv7bc",
-  "sourceStart": 505
+  "sourceStart": 505,
+  "steps": ["Lie flat, both legs straight, hands pressing the floor.","Raise one leg toward vertical as the other lowers.","Trade like scissors; stop the lower before the back lifts."]
  },
  {
   "id": "bw-extended-plank-hold",
@@ -2419,7 +2512,8 @@
   "sourceTitle": "10 MIN TOTAL AB EXPRESS WORKOUT - No Repeat, No Equipment",
   "sourceChannel": "growingannanas",
   "sourceUrl": "https://www.youtube.com/watch?v=PlqWX_cv7bc",
-  "sourceStart": 597
+  "sourceStart": 597,
+  "steps": ["From high plank, walk the hands ahead of the shoulders.","Hold with straight arms, tailbone tucked, whole body rigid.","Squeeze glutes hard; walk hands back if the back sags."]
  },
  {
   "id": "bw-foot-to-foot-crunch",
@@ -2444,7 +2538,8 @@
   "sourceTitle": "8 Min Abs Workout how to have six pack exercise",
   "sourceChannel": "P4P WORKOUTS",
   "sourceUrl": "https://www.youtube.com/watch?v=vkKCVCZe474",
-  "sourceStart": 5
+  "sourceStart": 5,
+  "steps": ["Knees bent, feet flat, shoulders lifted slightly off floor.","Slide one hand toward the same-side heel, then the other.","Shorten the side ribs each reach; arms alone do nothing."]
  },
  {
   "id": "bw-push-through-crunch",
@@ -2469,7 +2564,8 @@
   "sourceTitle": "8 Min Abs Workout how to have six pack exercise",
   "sourceChannel": "P4P WORKOUTS",
   "sourceUrl": "https://www.youtube.com/watch?v=vkKCVCZe474",
-  "sourceStart": 135
+  "sourceStart": 135,
+  "steps": ["Knees bent, arms straight, hands aimed between the knees.","Crunch up and push the hands through the knee gap.","Let the ribs start it; the neck just goes along."]
  },
  {
   "id": "bw-arm-reaching-crunch",
@@ -2494,7 +2590,8 @@
   "sourceTitle": "8 Min Abs Workout how to have six pack exercise",
   "sourceChannel": "P4P WORKOUTS",
   "sourceUrl": "https://www.youtube.com/watch?v=vkKCVCZe474",
-  "sourceStart": 265
+  "sourceStart": 265,
+  "steps": ["Lie back with both arms extended overhead beside the ears.","Curl up keeping the arms long and locked by the head.","Reach through the fingertips instead of swinging for momentum."]
  },
  {
   "id": "bw-leg-up-touch-crunch",
@@ -2520,7 +2617,8 @@
   "sourceTitle": "8 Min Abs Workout how to have six pack exercise",
   "sourceChannel": "P4P WORKOUTS",
   "sourceUrl": "https://www.youtube.com/watch?v=vkKCVCZe474",
-  "sourceStart": 313
+  "sourceStart": 313,
+  "steps": ["Point both legs straight up, arms reaching toward the toes.","Crunch up and tap the shins or toes each rep.","Hold the legs vertical as you fatigue, no drifting down."]
  },
  {
   "id": "bw-double-crunch",
@@ -2546,6 +2644,7 @@
   "sourceTitle": "8 Min Abs Workout how to have six pack exercise",
   "sourceChannel": "P4P WORKOUTS",
   "sourceUrl": "https://www.youtube.com/watch?v=vkKCVCZe474",
-  "sourceStart": 444
+  "sourceStart": 444,
+  "steps": ["Lie back, knees bent up, hands light behind the head.","Bring the knees and shoulders toward each other simultaneously.","Both halves must move every rep; neither end stalls."]
  }
 ]

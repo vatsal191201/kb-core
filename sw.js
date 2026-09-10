@@ -1,4 +1,4 @@
-const CACHE = "kbcore-v21";
+const CACHE = "kbcore-v23";
 
 // Precache the shell. Media clips are large, so they are cached lazily on
 // first play by the fetch handler below.

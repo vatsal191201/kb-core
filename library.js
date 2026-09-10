@@ -28,6 +28,42 @@
     return node;
   }
 
+  function titleCase(value) {
+    if (window.KB && typeof window.KB.titleCase === "function") return window.KB.titleCase(value);
+    return String(value || "").replace(/[-_]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase());
+  }
+
+  function formatTime(seconds) {
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  }
+
+  function sourceInfo(exercise) {
+    if (window.KB && typeof window.KB.sourceInfo === "function") return window.KB.sourceInfo(exercise);
+    const plain = String(exercise?.sourceUrl || "");
+    if (!plain) return null;
+    const seconds = Number(exercise?.sourceStart);
+    const hasTimestamp = Number.isFinite(seconds) && seconds >= 0;
+    try {
+      const url = new URL(plain);
+      const shortId = url.pathname.match(/^\/shorts\/([^/?#]+)/)?.[1];
+      if (shortId) { url.pathname = "/watch"; url.search = `?v=${encodeURIComponent(shortId)}`; }
+      if (hasTimestamp) url.searchParams.set("t", `${Math.floor(seconds)}s`);
+      return { href: url.toString(), seconds: hasTimestamp ? Math.floor(seconds) : null,
+        title: exercise?.sourceTitle || "Original video", channel: exercise?.sourceChannel || "" };
+    } catch (_) { return null; }
+  }
+
+  function addFocusTags(parent, focus) {
+    const tags = document.createElement("div");
+    tags.className = "focus-tags";
+    tags.setAttribute("aria-label", "Exercise targets");
+    (Array.isArray(focus) ? focus : []).forEach(value => {
+      addText(tags, "span", `focus-tag focus-tag--${value}`, titleCase(value));
+    });
+    parent.appendChild(tags);
+    return tags;
+  }
+
   // iOS Safari stops decoding past a handful of simultaneous videos.
   const MAX_LIVE_VIDEOS = 6;
 
@@ -221,12 +257,17 @@
     if (!detail) return;
     detail.replaceChildren();
 
-    const close = addText(detail, "button", "library-detail__close", "Back to exercises");
+    const close = addText(detail, "button", "sheet__close", "Back to exercises");
     close.type = "button";
+    const head = document.createElement("div");
+    head.className = "sheet__head";
+    head.appendChild(close);
+    detail.appendChild(head);
     close.addEventListener("click", () => {
       const video = detail.querySelector("video");
       if (video) video.pause();
       detail.hidden = true;
+      document.querySelector(`.ex-card[data-exercise-id="${exercise.id}"]`)?.focus({ preventScroll: true });
     });
 
     const video = makeVideo(exercise, "library-detail__video");
@@ -234,28 +275,40 @@
     // would ever attach its src now that makeVideo() is lazy. Attach it here.
     attachSrc(video);
     video.play().catch(() => {});
-    detail.appendChild(video);
-    addText(detail, "h2", "library-detail__name", exercise.name);
+    const media = document.createElement("div");
+    media.className = "sheet__media";
+    media.appendChild(video);
+    detail.appendChild(media);
+    addText(detail, "h2", "sheet__title", exercise.name);
 
     const facts = document.createElement("div");
-    facts.className = "library-detail__facts";
+    facts.className = "sheet__sub";
     addText(facts, "span", "ex-card__meta", exercise.level);
-    addText(facts, "span", "ex-card__meta", exercise.modeLabel);
+    addText(facts, "span", "ex-card__meta", ` · ${exercise.modeLabel || ""}`);
     detail.appendChild(facts);
     addText(detail, "p", "library-detail__muscles", `Targets: ${exercise.muscles || "Not specified"}`);
-    addText(detail, "p", "library-detail__cue", `Form cue: ${exercise.cue || "Move slowly and stay in control."}`);
-    addText(detail, "p", "library-detail__stop", `Stop if: ${exercise.stop || "You cannot maintain controlled form."}`);
+    addFocusTags(detail, exercise.focus);
+    addText(detail, "p", "sheet__cue", `Form cue: ${exercise.cue || "Move slowly and stay in control."}`);
+    const steps = document.createElement("div");
+    steps.className = "sheet__steps";
+    addText(steps, "h3", "sheet__section-title", "Move through it");
+    const list = document.createElement("ol");
+    (Array.isArray(exercise.steps) ? exercise.steps : []).forEach(step => addText(list, "li", "", step));
+    steps.appendChild(list); detail.appendChild(steps);
+    addText(detail, "p", "sheet__stop", `Stop if: ${exercise.stop || "You cannot maintain controlled form."}`);
 
-    const credit = document.createElement("a");
-    credit.className = "library-detail__credit";
-    credit.href = exercise.sourceUrl || "#";
-    credit.target = "_blank";
-    credit.rel = "noopener";
-    credit.textContent = `Source: ${exercise.sourceTitle || "Video"}${exercise.sourceChannel ? ` - ${exercise.sourceChannel}` : ""}`;
-    detail.appendChild(credit);
+    const info = sourceInfo(exercise);
+    if (info) {
+      const credit = document.createElement("a");
+      credit.className = "sheet__source";
+      credit.href = info.href; credit.target = "_blank"; credit.rel = "noopener";
+      credit.textContent = `Watch original ↗ · ${info.channel ? `${info.channel} · ` : ""}${info.title}${info.seconds === null ? "" : ` · ${formatTime(info.seconds)}`}`;
+      detail.appendChild(credit);
+    }
     detail.hidden = false;
     video.play().catch(() => {});
-    detail.scrollIntoView({ behavior: "smooth", block: "start" });
+    detail.scrollTop = 0;
+    close.focus({ preventScroll: true });
   }
 
   function renderLibrary() {
@@ -283,7 +336,7 @@
       body.className = "ex-card__body";
       addText(body, "h3", "ex-card__name", exercise.name);
       addText(body, "span", "ex-card__meta", exercise.level);
-      addText(body, "p", "ex-card__meta", exercise.muscles);
+      addFocusTags(body, exercise.focus);
       card.appendChild(body);
 
       card.addEventListener("click", () => openDetail(exercise));
@@ -384,7 +437,9 @@
     queue.forEach((item, index) => fragment.appendChild(makeQueueItem(item, index, currentIndex, true)));
     container.appendChild(fragment);
     const current = container.querySelector(".queue-item--current");
-    if (current) current.scrollIntoView({ block: "nearest" });
+    if (current && container.closest("details")?.open && !byId("view-run").classList.contains("hidden")) {
+      container.scrollTop = current.offsetTop - container.firstElementChild.offsetTop;
+    }
   }
 
   function attachHooks(kb) {
@@ -422,6 +477,9 @@
   }
 
   function navigateHome() {
+    const detail = byId("library-detail");
+    detail.querySelector("video")?.pause();
+    detail.hidden = true;
     if (typeof window.showView === "function") window.showView("view-home");
   }
 

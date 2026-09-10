@@ -110,9 +110,31 @@
   }
   function makeQueueExercise(exercise, block, round, finisher) {
     return { id: exercise.id, name: exercise.name || exercise.id, mode: exercise.mode || "bilateral",
-      modeLabel: exercise.modeLabel || "", cue: exercise.cue || "", stop: exercise.stop || "", block, round,
-      finisher: Boolean(finisher), video: exercise.video || `media/${exercise.id}.mp4`, poster: exercise.poster || `media/${exercise.id}.jpg` };
+      modeLabel: exercise.modeLabel || "", cue: exercise.cue || "", stop: exercise.stop || "",
+      steps: Array.isArray(exercise.steps) ? exercise.steps : [], focus: Array.isArray(exercise.focus) ? exercise.focus : [],
+      sourceUrl: exercise.sourceUrl || "", sourceTitle: exercise.sourceTitle || "",
+      sourceChannel: exercise.sourceChannel || "", sourceStart: exercise.sourceStart,
+      block, round, finisher: Boolean(finisher), video: exercise.video || `media/${exercise.id}.mp4`, poster: exercise.poster || `media/${exercise.id}.jpg` };
   }
+  function sourceInfo(exercise) {
+    const plain = String(exercise?.sourceUrl || "");
+    if (!plain) return null;
+    let href = plain;
+    const seconds = Number(exercise?.sourceStart);
+    const hasTimestamp = Number.isFinite(seconds) && seconds >= 0;
+    try {
+      const url = new URL(plain);
+      // Source chapters can come from a YouTube Short. The requested affordance
+      // is always the canonical watch URL so timestamps work consistently.
+      const shortId = url.pathname.match(/^\/shorts\/([^/?#]+)/)?.[1];
+      if (shortId) { url.pathname = "/watch"; url.search = `?v=${encodeURIComponent(shortId)}`; }
+      if (hasTimestamp) url.searchParams.set("t", `${Math.floor(seconds)}s`);
+      href = url.toString();
+    } catch (_) { return null; }
+    return { href, seconds: hasTimestamp ? Math.floor(seconds) : null,
+      title: exercise?.sourceTitle || "Original video", channel: exercise?.sourceChannel || "" };
+  }
+  KB.sourceInfo = sourceInfo;
   function selectExercises(pool, count, offset) {
     if (!pool.length || count < 1) return [];
     const preferred = pool.filter(matchesFocus).sort(byOrder);
@@ -130,8 +152,7 @@
     const cooldownCount = Math.min((plan.cooldown || []).length, pool.length);
     const queue = [];
     selectExercises(pool, warmupCount, 0).forEach(exercise => queue.push(makeQueueExercise(exercise, "Warm-up", 0)));
-    const rounds = KB.intensity === "easy" ? 2 : 3;
-    KB.settings.rounds = rounds;
+    const rounds = KB.settings.rounds;
     for (let round = 1; round <= rounds; round++) {
       selectExercises(pool, slotCount, round - 1).forEach(exercise => queue.push(makeQueueExercise(exercise, "Main", round)));
     }
@@ -148,6 +169,8 @@
     try { savedSession = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (_) {}
     if (!Array.isArray(savedSession)) return false;
     const catalogue = new Map(exercises.map(exercise => [exercise.id, exercise]));
+    // A stored custom session must obey the current equipment gate too.
+    if (savedSession.some(item => !catalogue.has(item?.id) || !KB.matchesEquipment(catalogue.get(item.id)))) return false;
     const restored = savedSession.map(item => {
       const exercise = catalogue.get(item && item.id);
       return exercise ? { ...makeQueueExercise(exercise, item.block || "Session", Number(item.round) || 0, item.finisher), ...item, name: exercise.name || item.name || item.id } : null;
@@ -168,6 +191,7 @@
   }
 
   function titleCase(value) { return String(value || "").replace(/[-_]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()); }
+  KB.titleCase = titleCase;
   function renderEquipment(exercises) {
     const list = Array.isArray(exercises) ? exercises : [];
     const counts = { kettlebell: 0, bodyweight: 0, both: list.filter(e => e && e.id).length };
@@ -224,6 +248,8 @@
   function renderBuilder() {
     const list = $("#builder-list");
     updateBuilderTotal();
+    setText("#builder-count", `${KB.queue.length} moves`);
+    if ($("#btn-start")) $("#btn-start").disabled = !KB.queue.length;
     if (!list) return;
     list.replaceChildren();
     if (!KB.queue.length) { list.textContent = "No exercises selected. Add an exercise to build your session."; return; }
@@ -239,6 +265,8 @@
       const meta = document.createElement("span"); meta.className = "slot__meta"; meta.textContent = builderMeta(item);
       const actions = document.createElement("div"); actions.className = "slot__actions";
       actions.append(button("Swap", "swap", index), button("Remove", "remove", index), button("Up", "up", index), button("Down", "down", index));
+      actions.querySelector('[data-action="up"]').disabled = index === 0;
+      actions.querySelector('[data-action="down"]').disabled = index === KB.queue.length - 1;
       row.append(handle, name, meta, actions); list.appendChild(row);
     });
   }
@@ -248,19 +276,24 @@
     const exercises = await KB.loadExercises();
     if (!Array.isArray(exercises)) return;
     picker.replaceChildren();
-    exercises.slice().sort(byOrder).forEach(exercise => {
+    const pool = exercises.filter(KB.matchesEquipment).sort(byOrder);
+    setText("#picker-count", `${pool.length} moves`);
+    picker.dataset.swapping = String(Number.isInteger(pickerSwapIndex));
+    pool.forEach(exercise => {
       const item = document.createElement("button"); item.type = "button"; item.className = "picker-item"; item.dataset.exerciseId = exercise.id || "";
       item.textContent = cleanText(`${exercise.name || exercise.id || "Exercise"}${exercise.modeLabel ? ` · ${exercise.modeLabel}` : ""}`);
       picker.appendChild(item);
     });
     picker.hidden = false;
+    picker.scrollTop = 0;
+    picker.scrollIntoView({ block: "center" });
   }
   function closePicker() { const picker = $("#builder-picker"); if (picker) picker.hidden = true; pickerSwapIndex = null; }
   async function addPickerExercise(id) {
     const exercises = await KB.loadExercises();
     if (!Array.isArray(exercises)) return;
     const exercise = exercises.find(item => item.id === id);
-    if (!exercise) return;
+    if (!exercise || !KB.matchesEquipment(exercise)) return;
     const queue = KB.queue.slice();
     const replacing = Number.isInteger(pickerSwapIndex) ? queue[pickerSwapIndex] : null;
     const item = makeQueueExercise(exercise, replacing?.block || "Custom", Number(replacing?.round) || 0, replacing?.finisher);
@@ -292,8 +325,8 @@
       });
     }
     wire("#btn-add-exercise", () => { pickerSwapIndex = null; renderPicker(); });
-    wire("#btn-regenerate", () => rebuildQueue({ force: true }));
-    wire("#btn-builder-back", () => showView("view-home"));
+    wire("#btn-regenerate", () => { closePicker(); rebuildQueue({ force: true }); });
+    wire("#btn-builder-back", () => { closePicker(); showView("view-home"); });
     wire("#btn-edit-session", () => { renderBuilder(); showView("view-builder"); });
   }
 
@@ -323,7 +356,7 @@
   });
 
   // A segment duration may be adjusted, but position always comes from t0.
-  const timer = { segments: [], index: 0, t0: 0, raf: 0, running: false, paused: false, pauseAt: 0, lastSecond: null, switched: false, startedAt: 0 };
+  const timer = { segments: [], index: 0, t0: 0, raf: 0, running: false, paused: false, pauseAt: 0, lastSecond: null, switched: false, startedAt: 0, pausedMs: 0 };
   const segmentStart = index => timer.segments.slice(0, index).reduce((sum, segment) => sum + segment.duration, 0);
   function makeSegments() {
     const segments = [];
@@ -338,7 +371,7 @@
   function loadClip(exercise) {
     const video = $("#vid");
     if (!video || !exercise) return;
-    video.autoplay = true; video.loop = true; video.muted = true; video.playsInline = true;
+    video.autoplay = !timer.paused; video.loop = true; video.muted = true; video.playsInline = true;
     video.setAttribute("muted", ""); video.setAttribute("playsinline", ""); video.setAttribute("preload", "auto");
     if (!video.dataset.fallbackWired) {
       video.dataset.fallbackWired = "true";
@@ -350,25 +383,68 @@
     if (video.dataset.exercise !== exercise.id) {
       video.dataset.exercise = exercise.id; video.src = exercise.video; video.poster = exercise.poster; video.load();
     }
-    video.play().catch(() => {});
+    if (timer.paused) video.pause();
+    else video.play().catch(() => {});
+  }
+  function formatSourceTime(seconds) {
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  }
+  function renderRunExerciseDetails(exercise) {
+    const steps = $("#ex-steps");
+    if (steps) {
+      steps.replaceChildren();
+      (Array.isArray(exercise?.steps) ? exercise.steps : []).slice(0, 4).forEach(step => {
+        const item = document.createElement("li"); item.textContent = cleanText(step); steps.appendChild(item);
+      });
+    }
+    const targets = $("#ex-focus");
+    if (targets) {
+      targets.replaceChildren();
+      (Array.isArray(exercise?.focus) ? exercise.focus : []).forEach(focus => {
+        const tag = document.createElement("span");
+        tag.className = `focus-tag focus-tag--${focus}`;
+        tag.textContent = titleCase(focus); targets.appendChild(tag);
+      });
+    }
+    const source = $("#ex-source");
+    if (source) {
+      source.replaceChildren();
+      const info = sourceInfo(exercise);
+      if (!info) { source.hidden = true; return; }
+      const link = document.createElement("a");
+      link.href = info.href; link.target = "_blank"; link.rel = "noopener";
+      link.className = "run__source-link";
+      link.setAttribute("aria-label", `Watch original: ${info.title}${info.seconds === null ? "" : ` at ${formatSourceTime(info.seconds)}`}`);
+      const icon = document.createElement("span"); icon.className = "run__source-icon"; icon.textContent = "↗"; icon.setAttribute("aria-hidden", "true"); link.appendChild(icon);
+      const label = document.createElement("span"); label.className = "run__source-label"; label.textContent = "Source"; link.appendChild(label);
+      const meta = [info.channel, info.title, info.seconds === null ? "" : formatSourceTime(info.seconds)].filter(Boolean).join(" · ");
+      const metaNode = document.createElement("span"); metaNode.className = "run__source-meta"; metaNode.textContent = cleanText(meta); link.appendChild(metaNode);
+      source.appendChild(link); source.hidden = false;
+    }
   }
   function renderSegment(announce = true) {
     const segment = timer.segments[timer.index];
     if (!segment) return;
     const ex = currentExercise();
     KB.currentIndex = segment.exerciseIndex;
+    const progressText = `${KB.currentIndex + 1} / ${KB.queue.length}${ex?.round ? ` · Round ${ex.round}/${KB.settings.rounds}` : ""}`;
+    setText("#prog-text", progressText);
+    const progress = $("#progress-bar");
+    if (progress) { progress.style.width = "0%"; progress.setAttribute("aria-valuenow", "0"); }
     timer.switched = false; timer.lastSecond = null;
     const phase = segment.type === "prep" ? "GET READY" : segment.type.toUpperCase();
     setText("#run-intensity", titleCase(KB.intensity));
     setText("#phase", phase);
-    setText("#ex-name", ex?.name || ""); setText("#name", ex?.name || "");
+    const demo = segment.type === "rest" ? (KB.queue[segment.exerciseIndex + 1] || ex) : ex;
+    setText("#ex-name", demo?.name || ""); setText("#name", demo?.name || "");
     setText("#ex-cue", segment.type === "rest" ? (KB.queue[segment.exerciseIndex + 1]?.cue || "") : (ex?.cue || ""));
     setText("#cue", segment.type === "rest" ? (KB.queue[segment.exerciseIndex + 1]?.cue || "") : (ex?.cue || ""));
+    renderRunExerciseDetails(demo);
     const stop = segment.type === "work" ? ex?.stop : "";
     // #ex-stop: styles.css prepends the words "Stop if " via ::before, so set the
     // RAW string here. #stopcue is the legacy v1 node with no such rule.
     setText("#ex-stop", stop || ""); setText("#stopcue", stop ? `Stop if: ${stop}` : "");
-    const side = ex?.mode === "unilateral_split" && segment.type !== "rest" ? "LEFT SIDE" : "";
+    const side = ex?.mode === "unilateral_split" && segment.type === "work" ? "LEFT SIDE" : "";
     setText("#ex-side", side); setText("#side", side);
     const next = segment.type === "rest" ? KB.queue[segment.exerciseIndex + 1] : KB.queue[segment.exerciseIndex + 1];
     setText("#up-next", next?.name || "Last interval"); setText("#next", next ? `Next: ${next.name}` : "Last interval");
@@ -422,7 +498,12 @@
     const elapsed = (now - timer.t0) / 1000;
     const inSegment = elapsed - segmentStart(timer.index);
     const left = segment.duration - inSegment;
-    if (left <= 0) { moveTo(timer.index + 1, now); return; }
+    if (left <= 0) {
+      // Natural transitions preserve elapsed time after a throttled tab wakes.
+      do { timer.index++; } while (timer.segments[timer.index] && elapsed >= segmentStart(timer.index) + timer.segments[timer.index].duration);
+      if (!timer.segments[timer.index]) return finish(true);
+      renderSegment(); renderFrame(now); return;
+    }
     const whole = Math.ceil(left);
     if (whole !== timer.lastSecond) {
       timer.lastSecond = whole; setText("#clock", fmt(whole));
@@ -432,7 +513,7 @@
       timer.switched = true; sounds.switch(); say("Switch sides"); setText("#ex-side", "RIGHT SIDE"); setText("#side", "RIGHT SIDE");
     }
     const pct = Math.max(0, Math.min(100, (inSegment / segment.duration) * 100));
-    const bar = $("#progress-bar") || $("#barfill"); if (bar) bar.style.width = `${pct}%`;
+    const bar = $("#progress-bar") || $("#barfill"); if (bar) { bar.style.width = `${pct}%`; bar.setAttribute("aria-valuenow", String(Math.round(pct))); }
     const text = `${Math.min(KB.currentIndex + 1, KB.queue.length)} / ${KB.queue.length}${currentExercise()?.round ? ` · Round ${currentExercise().round}/${KB.settings.rounds}` : ""}`;
     setText("#prog-text", text); setText("#prog", text);
     // Smoothness only. Correctness comes from the interval above.
@@ -462,7 +543,9 @@
       timer.pauseAt = performance.now(); $("#vid")?.pause();
       try { speechSynthesis.cancel(); } catch (_) {}
     } else {
-      timer.t0 += performance.now() - timer.pauseAt; // preserve elapsed time exactly
+      const pausedMs = performance.now() - timer.pauseAt;
+      timer.pausedMs += pausedMs;
+      timer.t0 += pausedMs; // preserve elapsed time exactly
       $("#vid")?.play().catch(() => {});
       lockScreen();
       startTicking();
@@ -481,13 +564,15 @@
   }
   function finish(completed) {
     if (!timer.running) return;
+    const activeMs = (timer.paused ? timer.pauseAt : performance.now()) - timer.startedAt - timer.pausedMs;
     stopTicking(); timer.running = false; timer.paused = false; releaseLock();
+    $("#vid")?.pause();
+    document.body.classList.remove("work", "rest", "prep");
     if (completed) {
       sounds.done(); say("Workout complete");
-      // t0 has already been shifted for pauses, skips, and nudges, so this is
-      // active session time rather than wall-clock time spent on the pause screen.
-      const durationSec = Math.max(0, Math.round((performance.now() - timer.t0) / 1000));
-      const entry = { date: new Date().toISOString(), durationSec, intensity: { ...KB.settings } };
+      // Transport edits move t0, so record active time separately from queue position.
+      const durationSec = Math.max(0, Math.round(activeMs / 1000));
+      const entry = { date: new Date().toISOString(), durationSec, intensity: { ...KB.settings }, intensityName: KB.intensity, equipment: KB.equipment };
       try { const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); history.unshift(entry); localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 30))); } catch (_) {}
       renderHistory(); setText("#done-summary", `${KB.queue.length} intervals · ${fmt(durationSec)}`); setText("#donesub", `${KB.queue.length} intervals · ${fmt(durationSec)}`);
       if ($("#view-done")) showView("view-done"); else { $("#run")?.classList.add("hidden"); $("#done")?.classList.remove("hidden"); }
@@ -500,15 +585,17 @@
     lockScreen();
     if (!KB.queue.length) await rebuildQueue();
     if (!KB.queue.length) return;
-    timer.segments = makeSegments(); timer.index = 0; timer.t0 = performance.now(); timer.startedAt = timer.t0;
+    timer.segments = makeSegments(); timer.index = 0; timer.t0 = performance.now(); timer.startedAt = timer.t0; timer.pausedMs = 0;
     timer.running = true; timer.paused = false;
+    setText("#btn-pause", "Pause");
+    $(".upnext__all")?.removeAttribute("open");
     if ($("#view-run")) showView("view-run"); else { $("#start")?.classList.add("hidden"); $("#run")?.classList.remove("hidden"); }
     renderSegment(false); startTicking();
   }
   function renderHistory() {
     const list = $("#history-list"); if (!list) return;
     let history = []; try { history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch (_) {}
-    list.replaceChildren(...history.map(item => { const li = document.createElement("li"), d = new Date(item.date); li.textContent = `${d.toLocaleDateString()} · ${fmt(item.durationSec)} · ${item.intensity?.rounds || "?"} rounds`; return li; }));
+    list.replaceChildren(...history.map(item => { const li = document.createElement("li"), d = new Date(item.date); li.textContent = `${d.toLocaleDateString()} · ${fmt(item.durationSec)} · ${item.intensityName ? titleCase(item.intensityName) + " · " : ""}${item.intensity?.rounds || "?"} rounds`; return li; }));
     if (!history.length) list.textContent = "No completed workouts yet.";
   }
   function wire(selector, handler) { const el = $(selector); if (el) el.addEventListener("click", handler); }
@@ -516,7 +603,17 @@
     Object.keys(defaults).forEach(name => {
       const input = $(`#set-${name}`); if (!input) return;
       input.min = LIMITS[name][0]; input.max = LIMITS[name][1]; input.value = KB.settings[name];
-      input.addEventListener("input", () => { KB.settings[name] = clamp(name, input.value); input.value = KB.settings[name]; saveSettings(); syncSettings(); });
+      input.addEventListener("input", () => {
+        if (input.value === "") return;
+        KB.settings[name] = clamp(name, input.value);
+        saveSettings(); updateTotal(); updateBuilderTotal(); notifyQueue();
+        if (name === "rounds") rebuildQueue({ force: true });
+      });
+      input.addEventListener("change", () => {
+        const previous = KB.settings[name];
+        KB.settings[name] = clamp(name, input.value); saveSettings(); syncSettings(); notifyQueue();
+        if (name === "rounds" && previous !== KB.settings[name]) rebuildQueue({ force: true });
+      });
     });
     document.querySelectorAll("#intensity button[data-intensity]").forEach(button => {
       if (button.dataset.intensity && !button.dataset.intensityWired) {
@@ -524,7 +621,9 @@
         button.addEventListener("click", () => {
           const intensity = button.dataset.intensity;
           if (!["easy", "standard", "hard"].includes(intensity)) return;
-          KB.intensity = intensity; saveSettings(); renderIntensity(); rebuildQueue({ force: true });
+          KB.intensity = intensity; KB.settings.rounds = intensity === "easy" ? 2 : 3;
+          saveSettings(); renderIntensity();
+          KB.loadExercises().then(renderFocus); rebuildQueue({ force: true });
         });
       }
     });
