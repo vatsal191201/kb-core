@@ -94,20 +94,12 @@
     return exercise && exercise.position === "floor" ? 3 : exercise && exercise.position === "standing" ? 2 : 2;
   }
   function byOrder(a, b) { return orderOf(a) - orderOf(b) || String(a.name || a.id).localeCompare(String(b.name || b.id)); }
-  function matchesFocus(exercise) {
-    return !KB.focus.length || (Array.isArray(exercise.focus) && exercise.focus.some(value => KB.focus.includes(value)));
-  }
   function equipmentOf(exercise) {
     return (exercise && exercise.equipment) || "kettlebell";
   }
   KB.matchesEquipment = function (exercise) {
     return KB.equipment === "both" || equipmentOf(exercise) === KB.equipment;
   };
-  function eligibleExercises(exercises) {
-    return (Array.isArray(exercises) ? exercises : []).filter(exercise => exercise && exercise.id
-      && KB.matchesEquipment(exercise)
-      && (KB.intensity !== "easy" || intensityOf(exercise) !== 3));
-  }
   function makeQueueExercise(exercise, block, round, finisher) {
     return { id: exercise.id, name: exercise.name || exercise.id, mode: exercise.mode || "bilateral",
       modeLabel: exercise.modeLabel || "", cue: exercise.cue || "", stop: exercise.stop || "",
@@ -135,33 +127,292 @@
       title: exercise?.sourceTitle || "Original video", channel: exercise?.sourceChannel || "" };
   }
   KB.sourceInfo = sourceInfo;
-  function selectExercises(pool, count, offset) {
-    if (!pool.length || count < 1) return [];
-    const preferred = pool.filter(matchesFocus).sort(byOrder);
-    const remainder = pool.filter(exercise => !matchesFocus(exercise)).sort(byOrder);
-    const candidates = (preferred.length ? preferred.concat(remainder) : remainder);
-    const size = Math.min(count, candidates.length);
-    const start = KB.focus.length ? 0 : (offset * size) % candidates.length;
-    const unique = Array.from({ length: size }, (_, index) => candidates[(start + index) % candidates.length]);
-    return unique.sort(byOrder);
+  /* ---------------------------------------------------------------------------
+   * Goal-directed selection (KB Core v3 — core-focused 70.3 block).
+   *
+   * The old selector took a contiguous window off the head of an order-sorted
+   * list, so it served the standing kettlebell moves (shoulders/power) first and
+   * left most of the library — and almost all the core work — unreachable
+   * (Main was 67% core / 3 qualities; upper-abs 0-of-16, lower-abs 2-of-35).
+   *
+   * This replaces it with a seeded, weighted, coverage-aware sampler that builds
+   * a core-DOMINANT session: braces first, overhead/power rare 30 days out, every
+   * move reachable across sessions, stable within a running session, varied to the
+   * next. It is a pure function of its inputs + seed (see buildSession), so it can
+   * be regenerated identically and checked headlessly.
+   * ------------------------------------------------------------------------- */
+  const CORE_TAGS = ["anti-extension", "anti-rotation", "anti-lateral-flexion", "obliques", "upper-abs", "lower-abs"];
+  const BRACE_TAGS = ["anti-extension", "anti-rotation", "anti-lateral-flexion"];
+  const CORE_SET = new Set(CORE_TAGS);
+  const BRACE_SET = new Set(BRACE_TAGS);
+  // Bracing family first: anti-* transfers to holding aero on the bike and posture
+  // on a fatigued run. anti-* > obliques > the flexion abs.
+  const TAG_PRIORITY = ["anti-extension", "anti-rotation", "anti-lateral-flexion", "obliques", "lower-abs", "upper-abs"];
+  // High-fatigue / high-skill loaded moves to keep rare in the Main block close to
+  // a race. Matched by id so exercises.json is never touched; power-tagged moves
+  // are de-emphasised too. They stay in the library and are welcome in warm-up.
+  const HEAVY_ID = /(swing|windmill|overhead|atlas|snatch|jerk|clean)/i;
+  const SEED_KEY = "kb-core-seed-v1";
+
+  function focusList(exercise) { return Array.isArray(exercise && exercise.focus) ? exercise.focus : []; }
+  function coreTagsOf(exercise) { return focusList(exercise).filter(tag => CORE_SET.has(tag)); }
+  function isCore(exercise) { return focusList(exercise).some(tag => CORE_SET.has(tag)); }
+  function isBrace(exercise) { return focusList(exercise).some(tag => BRACE_SET.has(tag)); }
+  function isShoulderPower(exercise) { return focusList(exercise).some(tag => tag === "shoulders" || tag === "power"); }
+  // The capped set (req #2): a move whose ONLY core tag co-occurs with shoulders/power
+  // — pressing/overhead work that barely counts as core (e.g. Overhead Press). A plank
+  // that also lists shoulders but carries multiple core qualities is genuine bracing
+  // work, not counted here, so the anti-* family the race wants is never capped out.
+  function isShoulderPowerOnlyCore(exercise) { return isShoulderPower(exercise) && coreTagsOf(exercise).length === 1; }
+  function isHeavy(exercise) { return focusList(exercise).includes("power") || HEAVY_ID.test(String((exercise && exercise.id) || "")); }
+
+  // Deterministic PRNG: a session is stable across reloads (same seed) but the next
+  // session (next seed) differs. xmur3 hashes the seed string, mulberry32 streams.
+  function xmur3(str) {
+    let h = 1779033703 ^ str.length;
+    for (let i = 0; i < str.length; i++) { h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19); }
+    return function () { h = Math.imul(h ^ (h >>> 16), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return h >>> 0; };
   }
-  function generatedQueue(exercises, plan) {
-    const pool = eligibleExercises(exercises);
-    const slotCount = Math.max(1, (plan.rounds || []).length || pool.length);
-    const warmupCount = Math.min((plan.warmup || []).length, pool.length);
-    const cooldownCount = Math.min((plan.cooldown || []).length, pool.length);
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function rngFrom(parts) { return mulberry32(xmur3(parts.join("|"))()); }
+
+  // Efraimidis-Spirakis weighted sampling without replacement: key = u^(1/w),
+  // larger key first. Any positive weight keeps a move reachable at some rank, so
+  // across seeds the union of picks covers the whole library.
+  function weightedOrder(items, weightFn, rng) {
+    return items.map(exercise => {
+      const weight = Math.max(weightFn(exercise), 1e-6);
+      const u = rng() || 1e-12;
+      return { exercise, key: Math.pow(u, 1 / weight) };
+    }).sort((a, b) => b.key - a.key || byOrder(a.exercise, b.exercise)).map(entry => entry.exercise);
+  }
+
+  /* Weights are a SOFT prior only. The hard guarantees come from pickMain's caps
+   * (≥80% core, shoulder/power ≤⅓, heavy ≤1) and Phase-A coverage — so the ranges
+   * below are deliberately compressed (≈2-3× spread within a block) to keep two
+   * consecutive sessions from converging on the same high-weight moves. */
+  function mainWeight(exercise) {
+    if (!isCore(exercise)) return 0.05;               // non-core: near-absent from Main (the cap enforces the 80% floor)
+    let weight = 1;                                    // spread across ALL core so consecutive sessions diverge as much as the library allows
+    if (isShoulderPowerOnlyCore(exercise)) weight *= 0.5;   // pressing-type, incidental core — de-emphasised and hard-capped
+    if (isBrace(exercise)) weight *= 1.15;           // gentle bracing bias for the race (kept mild to preserve variety)
+    if (isHeavy(exercise)) weight *= 0.3;            // race-aware de-emphasis (also hard-capped to ≤1)
+    return weight;
+  }
+  // Warm-up / cool-down carry only a light prior (position, keep-pure-core-for-Main,
+  // route-heavy-here) — kept gentle so these blocks stay near-uniform and don't
+  // recur move-for-move between sessions.
+  function warmupWeight(exercise) {
+    let weight = 1;                                   // floor stays viable so bodyweight (≈no standing) can still warm up
+    const position = exercise && exercise.position;
+    if (position === "standing") weight *= 1.5;
+    else if (position === "kneeling") weight *= 1.25;
+    else if (position === "plank") weight *= 0.9;
+    if (isHeavy(exercise)) weight *= 1.25;           // route swings/overhead into warm-up, out of Main
+    if (isCore(exercise) && !isShoulderPower(exercise)) weight *= 0.5;  // keep pure core for Main → warm-up draws a mostly-disjoint sub-pool
+    return weight;
+  }
+  function cooldownWeight(exercise) {
+    let weight = 1;
+    const position = exercise && exercise.position;
+    if (position === "floor") weight *= 1.4; else if (position === "standing") weight *= 0.7;
+    if (isBrace(exercise)) weight *= 1.1;            // finish on stabilising brace work
+    if (isHeavy(exercise)) weight *= 0.5;
+    return weight;
+  }
+  function finisherWeight(exercise) {
+    if (!isCore(exercise)) return 0.02;
+    let weight = 3;
+    if (intensityOf(exercise) >= 2) weight *= 1.8;
+    if (isBrace(exercise)) weight *= 1.3;
+    if (isHeavy(exercise)) weight *= 0.2;
+    return weight;
+  }
+
+  // Weighted unique draw for warm-up / cool-down / finisher. Never repeats: if the
+  // eligible pool is smaller than the requested block, the block is simply shorter
+  // (a thin focus filter must not pad by cycling the same 1-3 moves).
+  function drawUnique(pool, count, weightFn, rng, used) {
+    const chosen = [];
+    if (count < 1 || !pool.length) return chosen;
+    const ordered = weightedOrder(pool.filter(exercise => !used.has(exercise.id)), weightFn, rng);
+    for (const exercise of ordered) {
+      if (chosen.length >= count) break;
+      chosen.push(exercise); used.add(exercise.id);
+    }
+    return chosen;
+  }
+
+  // The Main block: core-dominant, ≥4 distinct core qualities, overhead/power capped.
+  function pickMain(pool, count, rng, used) {
+    if (count < 1 || !pool.length) return [];
+    const ordered = weightedOrder(pool.filter(exercise => !used.has(exercise.id)), mainWeight, rng);
+    const chosen = [], ids = new Set(), tags = new Set();
+    let nonCore = 0, shoulderPower = 0, heavy = 0;
+    const maxNonCore = Math.max(0, count - Math.ceil(count * 0.8));  // ≥80% of Main carries a core tag
+    const maxShoulderPower = Math.max(1, Math.round(count / 3));     // incidental shoulder/power core ≤ ~a third
+    const maxHeavy = 1;                                              // race-aware: at most one loaded move in Main
+    const canAdd = (exercise) => {
+      if (ids.has(exercise.id)) return false;
+      if (!isCore(exercise) && nonCore >= maxNonCore) return false;
+      if (isShoulderPowerOnlyCore(exercise) && shoulderPower >= maxShoulderPower) return false;
+      if (isHeavy(exercise) && heavy >= maxHeavy) return false;
+      return true;
+    };
+    const take = (exercise) => {
+      chosen.push(exercise); ids.add(exercise.id); used.add(exercise.id);
+      if (!isCore(exercise)) nonCore++; else coreTagsOf(exercise).forEach(tag => tags.add(tag));
+      if (isShoulderPowerOnlyCore(exercise)) shoulderPower++;
+      if (isHeavy(exercise)) heavy++;
+    };
+    // Phase A — guarantee distinct core qualities, bracing family first.
+    for (const tag of TAG_PRIORITY) {
+      if (chosen.length >= count || tags.size >= Math.min(count, 6)) break;
+      if (tags.has(tag)) continue;
+      const candidate = ordered.find(exercise => canAdd(exercise) && coreTagsOf(exercise).includes(tag));
+      if (candidate) take(candidate);
+    }
+    // Phase B — fill by weighted order, honouring the caps.
+    for (const exercise of ordered) {
+      if (chosen.length >= count) break;
+      if (canAdd(exercise)) take(exercise);
+    }
+    // Phase C — caps left us short (small pool): relax caps, keep uniqueness.
+    for (const exercise of ordered) {
+      if (chosen.length >= count) break;
+      if (!ids.has(exercise.id)) take(exercise);
+    }
+    // No padding: when the (focus-filtered) pool is genuinely smaller than the block
+    // the Main block is simply SHORTER. A move never repeats to fill slots — a thin
+    // focus yields a coherent short session, not the same 2-3 moves cycled ~20x.
+    return chosen;
+  }
+
+  function isEligibleFor(exercise, equipment, intensity) {
+    if (!exercise || !exercise.id) return false;
+    const mode = equipmentOf(exercise);
+    if (!(equipment === "both" || mode === equipment)) return false;
+    if (intensity === "easy" && intensityOf(exercise) === 3) return false;
+    return true;
+  }
+  function focusMatches(exercise, focus) {
+    return !focus.length || (Array.isArray(exercise.focus) && exercise.focus.some(tag => focus.includes(tag)));
+  }
+
+  /* Focus-chip availability — the single source of truth shared by renderFocus and
+   * the verifier. A tag is SELECTABLE iff at least one exercise clears the EXACT gate
+   * buildSession uses (isEligibleFor: equipment + intensity), so a chip shown normal
+   * always yields a real, non-empty session and a tag with nothing in the current mode
+   * is shown disabled with an honest hint — never tappable-and-empty. The chip SET is
+   * the whole library's tag list (mode-independent), so a tag is never silently hidden;
+   * only its enabled/disabled state changes when you switch mode or intensity. */
+  function focusCatalog(exercises) {
+    return [...new Set((Array.isArray(exercises) ? exercises : [])
+      .flatMap(exercise => Array.isArray(exercise.focus) ? exercise.focus : []))]
+      .sort((a, b) => a.localeCompare(b));
+  }
+  function focusAvailability(exercises, options) {
+    const opts = options || {};
+    const equipment = ["kettlebell", "bodyweight", "both"].includes(opts.equipment) ? opts.equipment : KB.equipment;
+    const intensity = ["easy", "standard", "hard"].includes(opts.intensity) ? opts.intensity : KB.intensity;
+    const list = Array.isArray(exercises) ? exercises : [];
+    const hasTag = (eq, inten, tag) => list.some(e => isEligibleFor(e, eq, inten) && Array.isArray(e.focus) && e.focus.includes(tag));
+    const countTag = (eq, inten, tag) => list.reduce((n, e) => n + (isEligibleFor(e, eq, inten) && Array.isArray(e.focus) && e.focus.includes(tag) ? 1 : 0), 0);
+    return focusCatalog(list).map(tag => {
+      const count = countTag(equipment, intensity, tag);
+      const selectable = count > 0;
+      let hint = "";
+      if (!selectable) {
+        // Where CAN these moves be found? Guide the user, don't just hide the tag.
+        if (hasTag("kettlebell", intensity, tag)) hint = "Kettlebell only";
+        else if (hasTag("bodyweight", intensity, tag)) hint = "No-equipment only";
+        else if (hasTag(equipment, "standard", tag) || hasTag(equipment, "hard", tag)
+              || hasTag("kettlebell", "hard", tag) || hasTag("bodyweight", "hard", tag)) hint = "Needs Standard/Hard";
+        else hint = "Unavailable";
+      }
+      return { tag, count, selectable, thin: selectable && count < 4, hint };
+    });
+  }
+  // Drop focus selections that are dead in the given mode (never leave a hidden filter).
+  function pruneFocus(focus, exercises, options) {
+    const live = new Set(focusAvailability(exercises, options).filter(a => a.selectable).map(a => a.tag));
+    return (Array.isArray(focus) ? focus : []).filter(tag => live.has(tag));
+  }
+  KB.focusCatalog = focusCatalog;
+  KB.focusAvailability = focusAvailability;
+  KB.pruneFocus = pruneFocus;
+
+  // Pure, testable session builder: output depends only on its inputs + seed.
+  function buildSession(exercises, plan, options) {
+    const opts = options || {};
+    const equipment = ["kettlebell", "bodyweight", "both"].includes(opts.equipment) ? opts.equipment : KB.equipment;
+    const intensity = ["easy", "standard", "hard"].includes(opts.intensity) ? opts.intensity : KB.intensity;
+    const focus = Array.isArray(opts.focus) ? opts.focus.filter(value => typeof value === "string") : [];
+    const rounds = clamp("rounds", opts.rounds != null ? opts.rounds : KB.settings.rounds);
+    const seed = opts.seed != null ? opts.seed : currentSeed();
+    plan = plan || {};
+
+    let pool = (Array.isArray(exercises) ? exercises : []).filter(exercise => isEligibleFor(exercise, equipment, intensity));
+    if (focus.length) pool = pool.filter(exercise => focusMatches(exercise, focus));  // focus chips are a hard filter
+    if (!pool.length) return [];
+
+    const slotCount = Math.max(1, (plan.rounds || []).length || 5);
+    const warmupCount = Math.min((plan.warmup || []).length || 0, pool.length);
+    const cooldownCount = Math.min((plan.cooldown || []).length || 0, pool.length);
+    const mainCount = slotCount * rounds;
+    const key = [seed >>> 0, equipment, intensity, rounds, focus.slice().sort().join(",")].join("|");
+    const used = new Set();
     const queue = [];
-    selectExercises(pool, warmupCount, 0).forEach(exercise => queue.push(makeQueueExercise(exercise, "Warm-up", 0)));
-    const rounds = KB.settings.rounds;
+
+    // Main first so it always draws from the richest pool and its coverage is protected;
+    // warm-up then absorbs the standing / overhead / power moves kept out of Main.
+    const main = pickMain(pool, mainCount, rngFrom([key, "main"]), used);
+    const warmup = drawUnique(pool, warmupCount, warmupWeight, rngFrom([key, "warmup"]), used);
+    const cooldown = drawUnique(pool, cooldownCount, cooldownWeight, rngFrom([key, "cooldown"]), used);
+    const finisher = intensity === "hard" ? (drawUnique(pool, 1, finisherWeight, rngFrom([key, "finisher"]), used)[0] || null) : null;
+
+    warmup.forEach(exercise => queue.push(makeQueueExercise(exercise, "Warm-up", 0)));
     for (let round = 1; round <= rounds; round++) {
-      selectExercises(pool, slotCount, round - 1).forEach(exercise => queue.push(makeQueueExercise(exercise, "Main", round)));
+      main.slice((round - 1) * slotCount, round * slotCount)
+        .forEach(exercise => queue.push(makeQueueExercise(exercise, "Main", round)));
     }
-    if (KB.intensity === "hard") {
-      const finisher = selectExercises(pool, 1, rounds)[0];
-      if (finisher) queue.push(makeQueueExercise(finisher, "Finisher", rounds + 1, true));
-    }
-    selectExercises(pool, cooldownCount, rounds).forEach(exercise => queue.push(makeQueueExercise(exercise, "Cool-down", 0)));
+    if (finisher) queue.push(makeQueueExercise(finisher, "Finisher", rounds + 1, true));
+    cooldown.forEach(exercise => queue.push(makeQueueExercise(exercise, "Cool-down", 0)));
     return queue;
+  }
+  KB.buildSession = buildSession;
+
+  // Rotating seed: stable within a session (persisted), advanced on regenerate.
+  function currentSeed() {
+    let raw = null;
+    try { raw = localStorage.getItem(SEED_KEY); } catch (_) {}
+    let n = parseInt(raw, 10);
+    if (!Number.isFinite(n)) { n = daySeed(); try { localStorage.setItem(SEED_KEY, String(n)); } catch (_) {} }
+    return n >>> 0;
+  }
+  function bumpSeed() {
+    const n = (currentSeed() + 1) >>> 0;
+    try { localStorage.setItem(SEED_KEY, String(n)); } catch (_) {}
+    return n;
+  }
+  function daySeed() {
+    try { const d = new Date(); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000) >>> 0; }
+    catch (_) { return 1; }
+  }
+  KB.currentSeed = currentSeed; KB.bumpSeed = bumpSeed;
+
+  function generatedQueue(exercises, plan) {
+    return buildSession(exercises, plan, {
+      equipment: KB.equipment, intensity: KB.intensity, focus: KB.focus,
+      rounds: KB.settings.rounds, seed: currentSeed()
+    });
   }
   function saveSession() { try { localStorage.setItem(SESSION_KEY, JSON.stringify(KB.queue)); } catch (_) {} }
   function restoreSession(exercises) {
@@ -184,6 +435,9 @@
     if (!options.force && restoreSession(exercises)) {
       updateTotal(); updateBuilderTotal(); notifyQueue(); renderBuilder(); return KB.queue;
     }
+    // A forced regenerate advances the rotating seed so the next session differs;
+    // a plain reload takes the restore path above and keeps the running queue stable.
+    if (options.force) bumpSeed();
     KB.queue = generatedQueue(exercises, plan);
     KB.currentIndex = 0; saveSettings(); saveSession(); syncSettings();
     updateTotal(); updateBuilderTotal(); notifyQueue(); renderBuilder();
@@ -216,16 +470,53 @@
   function renderFocus(exercises) {
     const container = $("#focus-chips");
     const list = Array.isArray(exercises) ? exercises : [];
-    const available = [...new Set(list.flatMap(exercise => Array.isArray(exercise.focus) ? exercise.focus : []))].sort((a, b) => a.localeCompare(b));
-    KB.focus = KB.focus.filter(value => available.includes(value));
-    const matched = eligibleExercises(list).filter(matchesFocus).length;
-    setText("#focus-count", String(matched));
+    const gate = { equipment: KB.equipment, intensity: KB.intensity };
+    const availability = focusAvailability(list, gate);
+    // Drop any selection that went dead in the current mode so no invisible filter
+    // silently narrows the session; persist so the dropped chip never comes back.
+    const pruned = pruneFocus(KB.focus, list, gate);
+    if (pruned.length !== KB.focus.length) { KB.focus = pruned; saveSettings(); }
+    // Honest count: eligible moves matching the current selection, over the pool total.
+    const pool = list.filter(exercise => isEligibleFor(exercise, KB.equipment, KB.intensity));
+    const matched = pool.filter(exercise => focusMatches(exercise, KB.focus)).length;
+    setText("#focus-count", KB.focus.length ? `${matched} of ${pool.length} moves` : `${pool.length} moves`);
+    const modeLabel = KB.equipment === "bodyweight" ? "No-equipment" : titleCase(KB.equipment);
+    // Short-session note when the active selection can't fill a full block (1-3 moves).
+    const note = $("#focus-note");
+    if (note) {
+      if (KB.focus.length && matched > 0 && matched < 4) {
+        note.textContent = `Short focused session — only ${matched} matching move${matched === 1 ? "" : "s"} in ${modeLabel} mode. Slots won't repeat to pad it out.`;
+        note.hidden = false;
+      } else { note.textContent = ""; note.hidden = true; }
+    }
     if (!container) return;
     container.replaceChildren();
-    available.forEach(focus => {
+    availability.forEach(({ tag, count, selectable, thin, hint }) => {
       const button = document.createElement("button");
-      button.type = "button"; button.className = "chip"; button.dataset.focus = focus;
-      button.textContent = titleCase(focus); button.setAttribute("aria-pressed", String(KB.focus.includes(focus)));
+      button.type = "button";
+      button.dataset.focus = tag;
+      button.className = "chip" + (selectable ? (thin ? " chip--thin" : "") : " chip--disabled");
+      const label = document.createElement("span");
+      label.className = "chip__label"; label.textContent = titleCase(tag);
+      button.appendChild(label);
+      if (selectable) {
+        button.setAttribute("aria-pressed", String(KB.focus.includes(tag)));
+        if (thin) {
+          const badge = document.createElement("span");
+          badge.className = "chip__badge"; badge.textContent = String(count); badge.setAttribute("aria-hidden", "true");
+          button.appendChild(badge);
+          button.setAttribute("aria-label", `${titleCase(tag)} — only ${count} move${count === 1 ? "" : "s"} in ${modeLabel} mode (short session)`);
+        }
+      } else {
+        // Visibly unavailable, not hidden: user learns the tag lives elsewhere.
+        button.disabled = true;
+        button.setAttribute("aria-disabled", "true");
+        button.setAttribute("aria-pressed", "false");
+        const tagHint = document.createElement("span");
+        tagHint.className = "chip__hint"; tagHint.textContent = hint; tagHint.setAttribute("aria-hidden", "true");
+        button.appendChild(tagHint);
+        button.setAttribute("aria-label", `${titleCase(tag)} — unavailable in ${modeLabel} mode (${hint})`);
+      }
       container.appendChild(button);
     });
   }
@@ -649,6 +940,8 @@
       focusChips.dataset.focusWired = "true";
       focusChips.addEventListener("click", event => {
         const button = event.target.closest("button[data-focus]"); if (!button || !focusChips.contains(button)) return;
+        // A disabled (dead-in-this-mode) chip must never toggle a filter or build a session.
+        if (button.disabled || button.getAttribute("aria-disabled") === "true") return;
         const focus = button.dataset.focus; if (!focus) return;
         KB.focus = KB.focus.includes(focus) ? KB.focus.filter(value => value !== focus) : KB.focus.concat(focus);
         saveSettings(); KB.loadExercises().then(exercises => { renderFocus(exercises); rebuildQueue({ force: true }); }).catch(() => {});

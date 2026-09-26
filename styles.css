@@ -1041,6 +1041,35 @@ a { color: var(--lime); text-underline-offset: 3px; }
   border-color: var(--lime);
   color: var(--on-lime);
 }
+
+/* Focus chips carry a label + optional badge/hint, so lay them out inline.
+   Scoped to #focus-chips to leave the library filter row untouched. */
+#focus-chips .chip { display: inline-flex; align-items: center; gap: 7px; }
+#focus-chips .chip__label { line-height: 1; }
+/* Thin tag (1-3 moves in this mode): selectable, but flags a short session. */
+.chip__badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .16);
+  font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+/* Dead tag in the current mode: shown, dimmed, non-tappable — never hidden. */
+.chip--disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  background: var(--bg-2);
+  border-color: var(--line);
+  color: var(--ink-3);
+}
+.chip--disabled:active { transform: none; }
+.chip__hint {
+  font-size: 11px; font-weight: 600; letter-spacing: .01em;
+  color: var(--ink-3); opacity: .95;
+}
+/* Honest short-session note under the chips (caution amber). */
+.hint--warn { color: var(--amber); }
 .chiprow__sep {
   flex: none;
   width: 1px;

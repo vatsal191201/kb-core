@@ -1,15 +1,26 @@
 # KB Core
 
 A daily kettlebell **core workout** web app. Offline-capable PWA, no build step,
-no dependencies — just static files.
+no dependencies — just static files. Live at **[kb-core.vercel.app](https://kb-core.vercel.app)**.
+
+![KB Core demo](docs/demo.gif)
+
+[Full-quality video (21 s, 1080p)](docs/demo.mp4)
 
 Built because every interval timer I tried either had no exercise demos, or
 buried the controls, or wouldn't work without a network connection at 6am.
 
 ## Features
 
+- **One-tap sessions** — pick equipment (kettlebell / no equipment / both), intensity
+  (easy / standard / hard + finisher) and a focus (lower abs, obliques, anti-rotation…);
+  it builds warm-up, main rounds and cool-down
+- **Honest focus chips** — a focus with no moves in the current equipment mode goes
+  grey instead of producing an empty session
+- **Edit before you start** — swap, remove or reorder moves, or regenerate a fresh mix
 - **60s work / 20s rest** interval engine — fully editable (work, rest, rounds, prep)
-- **18 exercise demos** as short looping clips, cut from public YouTube tutorials
+- **99 exercises** (50 kettlebell, 49 bodyweight), each a short looping demo clip cut
+  from public YouTube tutorials, with step-by-step cues and a timestamped source link
 - **Exercise library** — browse every movement with form cues *without* starting a session
 - **Session preview** — see the full ordered workout before you begin, and what's
   coming up mid-session
@@ -37,11 +48,12 @@ That's it. No `npm install`, no bundler, no framework.
 ```
 index.html        markup + all four views
 styles.css        all styling
-app.js            timer engine, transport controls, settings, history
+app.js            timer engine, session builder, transport controls, settings, history
 library.js        exercise library, session preview, upcoming list
-exercises.json    18-exercise catalogue (cues, muscles, level, source credits)
+exercises.json    99-exercise catalogue (cues, steps, focus tags, muscles, source credits)
 workout.json      default session structure
 media/            <id>.mp4 demo loops + <id>.jpg posters
+docs/             demo video + README GIF (app UI only, no third-party footage)
 sw.js             offline cache
 ```
 
